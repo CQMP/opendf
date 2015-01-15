@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable" 
@@ -80,6 +82,7 @@ GRID_HDF5_LOADER(real_grid, typename real_grid::value_type);
 GRID_HDF5_LOADER(enum_grid, int);
 GRID_HDF5_LOADER(matsubara_grid<true>, typename matsubara_grid<true>::value_type);
 GRID_HDF5_LOADER(matsubara_grid<false>, typename matsubara_grid<false>::value_type);
+GRID_HDF5_LOADER(kmesh, typename kmesh::value_type);
 #undef GRID_HDF5_LOADER 
 
 
@@ -120,10 +123,15 @@ struct hdf5_grid_tuple<std::tuple<Grid>,N>
 
 // gridobject
 template <typename T> 
-inline void save_grid_object(alps::hdf5::archive & ar, std::string const & path, const T& c) 
+inline void save_grid_object(alps::hdf5::archive & ar, std::string const & path, const T& c, bool plaintext = false) 
 {
+    std::cout << "hdf5 : saving " << typeid(T).name() << " to " << path << std::endl;
     hdf5_grid_tuple<typename T::grid_tuple>::save(ar,path+"/grids",c.grids());
     save(ar,path+"/data", c.data());
+    std::string p2(path);
+    std::vector<std::string> split_vec; 
+    boost::algorithm::split(split_vec, path, boost::is_any_of("/"), boost::token_compress_on );
+    if (plaintext) c.savetxt(split_vec[split_vec.size()-1]+".dat");
 }
 
 template <typename T> 

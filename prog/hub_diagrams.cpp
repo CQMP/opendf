@@ -1,9 +1,12 @@
 #include <boost/program_options.hpp>
+#include <boost/mpi.hpp>
 #include <chrono>
 #include <alps/params.hpp>
 
 #include <opendf/lattice_traits.hpp>
 #include <opendf/df.hpp>
+
+#include "data_save.hpp"
 
 namespace po = boost::program_options;
 using namespace open_df;
@@ -24,6 +27,9 @@ void conflicting_options(const po::variables_map& vm, const char* opt1, const ch
 
 int main(int argc, char *argv[])
 {
+    boost::mpi::environment env;
+    boost::mpi::communicator comm;
+
     print_section("DF ladder in " + std::to_string(D) + " dimensions.");
     alps::params p = cmdline_params(argc, argv); 
     
@@ -77,7 +83,6 @@ int main(int argc, char *argv[])
     // get dispersion
     disp_type disp(std::forward_as_tuple(kgrid, kgrid));
     disp.fill(lattice.get_dispersion());  
-
         
     // construct a df run 
     df_hubbard<cubic_traits<2>> DF(gw, Delta, lattice, kgrid, density_vertex, magnetic_vertex);
@@ -87,26 +92,18 @@ int main(int argc, char *argv[])
     gw_type delta_upd = DF(p);
     end = steady_clock::now();
 
-    std::cout << "Calculation lasted : " 
-        << duration_cast<hours>(end-start).count() << "h " 
-        << duration_cast<minutes>(end-start).count()%60 << "m " 
-        << duration_cast<seconds>(end-start).count()%60 << "s " 
-        << duration_cast<milliseconds>(end-start).count()%1000 << "ms " 
-        << std::endl;
-    p["run_time"] = duration_cast<seconds>(end-start).count();
+    if (!comm.rank()) { 
 
+        std::cout << "Calculation lasted : " 
+            << duration_cast<hours>(end-start).count() << "h " 
+            << duration_cast<minutes>(end-start).count()%60 << "m " 
+            << duration_cast<seconds>(end-start).count()%60 << "s " 
+            << duration_cast<milliseconds>(end-start).count()%1000 << "ms " 
+            << std::endl;
+        p["run_time"] = duration_cast<seconds>(end-start).count();
 
-/*
-    // output
-    // save sigma
-    sigma_d.savetxt("sigma_wk.dat");
-    // save sigma at first matsubara
-    auto w0 = fgrid.find_nearest(I*PI/beta);
-    disp_type sigma_w0(std::forward_as_tuple(kgrid,kgrid),sigma_d[w0]);
-    sigma_w0.savetxt("sigma_w0.dat");
-    // save bare bubbles
-    bare_bubbles.savetxt("db0.dat");
-*/
+        save_data(DF, p); 
+        }
 }
 
 /// Check that 2 cmd options are not specified at the same time.
@@ -130,14 +127,14 @@ alps::params cmdline_params(int argc, char* argv[])
         ("kpts",                    po::value<int>()->default_value(16), "number of points on a single axis in Brilloin zone")
         ("df_sc_iter",       po::value<int>()->default_value(1000), "maximum df iterations")
         ("nbosonic",           po::value<int>()->default_value(10),  "amount of bosonic freqs to use (reduced also by the amount of freqs in the vertex")
-        ("n_bs_iter",               po::value<int>()->default_value(100), "amount of self-consistent iterations in BS (with eval_bs_sc = 1)");
+        ("n_bs_iter",               po::value<int>()->default_value(100), "amount of self-consistent iterations in BS (with eval_bs_sc = 1)")
+        ("plaintext,p",      po::value<int>()->default_value(1), "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)");
     string_opts.add_options()
         ("input",           po::value<std::string>()->default_value("output.h5"), "input file with vertices and gf")
         ("output",          po::value<std::string>()->default_value("output.h5"), "output file");
     bool_opts.add_options()
         ("update_df_mixing", po::value<bool>()->default_value(1), "update mixing of dual gf for better accuracy")
-        ("eval_bs_sc", po::value<bool>()->default_value(0), "evaluate Bethe-Salpeter equation self-consistently")
-        ("plaintext,p",      po::value<bool>()->default_value(0), "save additionally to plaintext files");
+        ("eval_bs_sc", po::value<bool>()->default_value(0), "evaluate Bethe-Salpeter equation self-consistently");
 
     po::options_description cmdline_opts;
     cmdline_opts.add(double_opts).add(int_opts).add(string_opts).add(generic_opts).add(bool_opts).add(vec_double_opts);

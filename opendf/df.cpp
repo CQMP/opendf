@@ -38,15 +38,26 @@ typename df_base<LatticeT>::gk_type df_base<LatticeT>::glat_dmft() const
 }
 
 template <typename LatticeT>
-typename df_base<LatticeT>::gk_type df_base<LatticeT>::lattice_selfenergy_correction() const
+typename df_base<LatticeT>::gw_type df_base<LatticeT>::sigma_dmft(double mu) const
+{
+    gw_type sigma_out(fgrid_);
+    for (auto iw : fgrid_.points()) { 
+        sigma_out[iw] =  iw.value() + mu - delta_[iw] - 1./gw_[iw];
+        };
+    return sigma_out;
+}
+
+template <typename LatticeT>
+typename df_base<LatticeT>::gk_type df_base<LatticeT>::sigma_lat(double mu) const
 {
     gk_type sigma_lat(this->gd0_.grids());
     sigma_lat = 0;
-    if (is_float_equal(sigma_d_.diff(sigma_lat), 0),1e-12) return sigma_lat;
+    double non_zero = !is_float_equal(sigma_d_.diff(sigma_lat), 0, 1e-12);
+    gw_type sigma_dmft1 = this->sigma_dmft(mu);
     for (auto w : fgrid_.points()) { 
-        sigma_lat[w] = 1.0 / ( 1.0 + sigma_d_[w] * gw_[w] ) * sigma_d_[w];
-    }
-    return std::move(sigma_lat);
+        sigma_lat[w] = sigma_dmft1[w] + non_zero / ( 1.0 + sigma_d_[w] * gw_[w] ) * sigma_d_[w];
+        }
+    return sigma_lat;
 }
 
 template <typename LatticeT>
