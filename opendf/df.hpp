@@ -27,8 +27,9 @@ public:
     gk_type glat_dmft() const;
 
     gk_type glat() const { return this->glat_; }
-    gk_type lattice_selfenergy() const;
+    gk_type lattice_selfenergy_correction() const;
     gk_type const& dual_selfenergy() const { return this->sigma_d_; }
+    gw_type glat_loc() const;
 
 protected: 
     /// Lattice to evaluate k-dependent integrals
@@ -54,7 +55,7 @@ protected:
 };
 
 template <typename LatticeT> 
-class df_hubbard : df_base<LatticeT>
+class df_hubbard : public df_base<LatticeT>
 {
 public:
     typedef df_base<LatticeT> base;

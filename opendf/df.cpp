@@ -38,6 +38,29 @@ typename df_base<LatticeT>::gk_type df_base<LatticeT>::glat_dmft() const
 }
 
 template <typename LatticeT>
+typename df_base<LatticeT>::gk_type df_base<LatticeT>::lattice_selfenergy_correction() const
+{
+    gk_type sigma_lat(this->gd0_.grids());
+    sigma_lat = 0;
+    if (is_float_equal(sigma_d_.diff(sigma_lat), 0),1e-12) return sigma_lat;
+    for (auto w : fgrid_.points()) { 
+        sigma_lat[w] = 1.0 / ( 1.0 + sigma_d_[w] * gw_[w] ) * sigma_d_[w];
+    }
+    return std::move(sigma_lat);
+}
+
+template <typename LatticeT>
+typename df_base<LatticeT>::gw_type df_base<LatticeT>::glat_loc() const
+{
+    gw_type glatloc(fgrid_);
+    double knorm = boost::math::pow<NDim>(kgrid_.size());
+    for (auto w : fgrid_.points()) { 
+        glatloc[w] = glat_[w].sum()/knorm; 
+        }
+    return std::move(glatloc);
+}
+
+template <typename LatticeT>
 typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::params p)
 {
     std::cout << "Starting ladder dual fermion calculations" << std::endl;
@@ -72,6 +95,9 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     fvertex_type m_v(fgrid_, fgrid_), d_v(m_v);
     gw_type dual_bubble(fgrid_);
     gk_type full_vertex(gd0_.grids());
+    matrix_type full_m(fgrid_.size(), fgrid_.size());
+    matrix_type full_d(fgrid_.size(), fgrid_.size());
+
     
     double diff_gd = 1.0, diff_gd_min = diff_gd;
     int diff_gd_min_count = 0;
@@ -91,8 +117,8 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
             d_v.data() = density_vertex_[W];
             m_v.data() = magnetic_vertex_[W];
 
-            matrix_type density_v_matrix = d_v.data().as_matrix(); 
-            matrix_type magnetic_v_matrix = m_v.data().as_matrix(); 
+            const matrix_type density_v_matrix = d_v.data().as_matrix(); 
+            const matrix_type magnetic_v_matrix = m_v.data().as_matrix(); 
 
             // loop through bz
             size_t nq = 1;
@@ -112,13 +138,16 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 matrix_type dual_bubble_matrix = dual_bubble.data().as_diagonal_matrix(); 
 
                 std::cout << "\tMagnetic channel : " << std::flush;
-                auto full_m = diagrams::BS(dual_bubble_matrix, magnetic_v_matrix, true, false, n_bs_iter, bs_mix).diagonal();
+                full_m = diagrams::BS(dual_bubble_matrix, magnetic_v_matrix, true, false, n_bs_iter, bs_mix);
                 std::cout << "\tDensity channel  : " << std::flush;
-                auto full_d = diagrams::BS(dual_bubble_matrix, density_v_matrix, true, false, n_bs_iter, bs_mix).diagonal();
+                full_d = diagrams::BS(dual_bubble_matrix, density_v_matrix, true, false, n_bs_iter, bs_mix);
 
                 for (typename fmatsubara_grid::point iw1 : fgrid_.points())  {
-                    auto magnetic_val = full_m[iw1.index()];
-                    auto density_val = full_d[iw1.index()];
+                    int iwn = iw1.index();
+                    std::complex<double> magnetic_val = full_m(iwn, iwn);
+                    std::complex<double> density_val  = full_d(iwn, iwn);
+                    //std::cout <<"m_v : " << magnetic_val << std::endl;
+                    //std::cout <<"d_v : " << density_val << std::endl;
                     for (auto q_pt : other_pts) { 
                         full_vertex.get(std::tuple_cat(std::make_tuple(iw1),q_pt)) = 0.5*(3.0*(magnetic_val)+density_val);
                         };
@@ -131,6 +160,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 auto gdr = run_fft(gd_[iw1], FFTW_BACKWARD);
                 sigma_d_[iw1]+= (1.0*T)*run_fft(v4r*gdr, FFTW_FORWARD); 
                 };
+            std::cout << "After W = " << W << " sigma diff = " << sigma_d_.diff(sigma_d_ * 0) << std::endl;
 
             } // end bgrid loop
 
