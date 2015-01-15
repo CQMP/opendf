@@ -5,12 +5,12 @@ set (df_src
     df.hpp df.cpp 
     )
 
-add_library(open_df${DF_POSTFIX} SHARED ${df_src})
+add_library(${opendf_name} SHARED ${df_src})
 
-install(TARGETS open_df${DF_POSTFIX}
+install(TARGETS ${opendf_name}
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
     )
 
-install(DIRECTORY . DESTINATION include/open_df/
+install(DIRECTORY . DESTINATION include/opendf/
           FILES_MATCHING PATTERN "*.h *.hpp")

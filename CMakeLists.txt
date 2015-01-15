@@ -107,7 +107,16 @@ include_directories(
     ${CMAKE_BINARY_DIR}
 )
 
-add_subdirectory(src)
+# build library
+set (opendf_name opendf${DF_POSTFIX})
+add_subdirectory(opendf)
+# build executables
 add_subdirectory(prog)
+# build tests
+option(Testing "Enable testing" ON)
+if (Testing)
+    enable_testing()
+    add_subdirectory(test)
+endif (Testing)
+# build misc tools - converters, etc
 add_subdirectory(tools)
-

@@ -1,20 +1,9 @@
-/** 
- * This is a simple unoptimized code to evaluate some low-order dual diagrams in FK model
- * input : 
- *  --order : order of the diagram
- *  --vertex_file : full impurity vertex. default : "gamma4.dat"
- *  --gd0_file : bare dual Green's function. default : "gd0_k.dat"
- * output:
- *  - dual self-energy "sigma_wk.dat"
- *  - cut of dual self-energy at first Matsubara freq
- *  - k-dependence of dual bubbles (summer over Matsubara freqs). 
- */
-
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <alps/params.hpp>
-#include "lattice_traits.hpp"
-#include "df.hpp"
+
+#include <opendf/lattice_traits.hpp>
+#include <opendf/df.hpp>
 
 namespace po = boost::program_options;
 using namespace open_df;

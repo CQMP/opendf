@@ -28,6 +28,7 @@ template <typename LatticeT>
 typename df_base<LatticeT>::gk_type df_base<LatticeT>::glat_dmft() const
 {
     gk_type glat_dmft(gd0_.grids());
+    int kpts = kgrid_.size();
     for (auto w : fgrid_.points()) { 
         glat_dmft[w] = 1.0 / ( 1.0 / gw_[w] + delta_[w] - disp_.data());  
         //if (!is_float_equal(glat_dmft[w].sum()/pow<D>(kpts), gw[w], 1e-3)) ERROR(glat_dmft[w].sum()/pow<D>(kpts) << " != " << gw[w]);
@@ -110,7 +111,9 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
 
                 matrix_type dual_bubble_matrix = dual_bubble.data().as_diagonal_matrix(); 
 
+                std::cout << "\tMagnetic channel : " << std::flush;
                 auto full_m = diagrams::BS(dual_bubble_matrix, magnetic_v_matrix, true, false, n_bs_iter, bs_mix).diagonal();
+                std::cout << "\tDensity channel  : " << std::flush;
                 auto full_d = diagrams::BS(dual_bubble_matrix, density_v_matrix, true, false, n_bs_iter, bs_mix).diagonal();
 
                 for (typename fmatsubara_grid::point iw1 : fgrid_.points())  {

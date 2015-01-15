@@ -5,7 +5,7 @@
 #include <boost/program_options.hpp>
 #include <Eigen/Core>
 #include <gftools.hpp>
-#include "hdf5.hpp"
+#include "opendf/hdf5.hpp"
 
 namespace po = boost::program_options;
 using namespace gftools;
