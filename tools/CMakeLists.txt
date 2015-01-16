@@ -1,5 +1,6 @@
 set (execs 
 parse_alps_data
+generate_atomic
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/src)

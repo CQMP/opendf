@@ -1,5 +1,5 @@
 #
-# dual_diagrams cMake configuration file
+# dual_diagrams cmake configuration file
 #
 
 cmake_minimum_required (VERSION 2.8)
@@ -13,7 +13,7 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake) # find additional cmake module in cmake dir
 
 # title and version of the project
-project (dual_diagrams CXX)
+project (opendf CXX)
 # Print build type
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 # some compiler flags
@@ -120,3 +120,6 @@ if (Testing)
 endif (Testing)
 # build misc tools - converters, etc
 add_subdirectory(tools)
+
+### Additional installation files
+configure_file("${CMAKE_SOURCE_DIR}/opendf.lmod.in" "${CMAKE_BINARY_DIR}/opendf.lmod")

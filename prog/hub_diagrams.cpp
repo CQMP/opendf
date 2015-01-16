@@ -144,7 +144,7 @@ alps::params cmdline_params(int argc, char* argv[])
 
     // Help options
     if (vm.count("help")) { 
-        std::cout << "DF diagrams evaulation\n" << cmdline_opts << std::endl; exit(0);  }
+        std::cout << "Program options : \n" << cmdline_opts << std::endl; exit(0);  }
 
     for (auto x : double_opts.options()) p[x->long_name()] = vm[x->long_name()].as<double>();
     for (auto x : int_opts.options()) p[x->long_name()] = vm[x->long_name()].as<int>();

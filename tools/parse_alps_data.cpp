@@ -11,6 +11,7 @@ namespace po = boost::program_options;
 using namespace gftools;
 
 typedef grid_object<std::complex<double>, bmatsubara_grid, fmatsubara_grid, fmatsubara_grid> vertex_type;
+typedef grid_object<std::complex<double>, fmatsubara_grid, fmatsubara_grid> fvertex_type;
 typedef grid_object<std::complex<double>, fmatsubara_grid> gw_type;
 typedef grid_object<std::complex<double>, fmatsubara_grid, kmesh, kmesh> gk_type;
 typedef grid_object<std::complex<double>, kmesh, kmesh> disp_type;
@@ -35,7 +36,7 @@ int main(int argc, char *argv[])
     std::string vertex_file=vm["vertex_file"].as<std::string>();
     std::string gw_file=vm["gw_file"].as<std::string>();
     std::string sigma_file=vm["sigma_file"].as<std::string>();
-    bool plain_text = vm["plaintext"].as<bool>();
+    bool plaintext = vm["plaintext"].as<bool>();
 
     std::string outfile_name = "qmc_output.h5";
     std::cout << "Saving data to " << outfile_name << std::endl;
@@ -61,24 +62,34 @@ int main(int argc, char *argv[])
     double beta = gw_arr[0].grid().beta();
     std::cout << "beta = " << beta << std::endl;
     assert(sigma_arr[0].grid().beta() == gw_arr[0].grid().beta());
-    auto vertex_array = read_vertex(vertex_file, beta);
-    vertex_type const& F_upup = std::get<0>(vertex_array);
-    vertex_type const& F_updn = std::get<1>(vertex_array);
+    auto input_vertex_array = read_vertex(vertex_file, beta);
+    // There is a minus sign between DF and DGA notations :-(
+    vertex_type const& F_upup = std::get<0>(input_vertex_array)*(-1.);
+    vertex_type const& F_updn = std::get<1>(input_vertex_array)*(-1.);
 
     save_grid_object(ar, "F00", F_upup);
     save_grid_object(ar, "F01", F_updn);
 
-    if (plain_text) { 
+    bmatsubara_grid const& bgrid = F_upup.template grid<0>();
+    fmatsubara_grid const& fgrid = F_upup.template grid<1>(); 
+
+    auto W0 = bgrid.find_nearest(0.0);
+    fvertex_type F_upup_static(fgrid,fgrid), F_updn_static(fgrid,fgrid);
+    F_upup_static.data() = F_upup[W0];
+    F_updn_static.data() = F_updn[W0];
+
+    if (plaintext) { 
         delta_arr[0].savetxt("delta0.dat");
         delta_arr[1].savetxt("delta1.dat");
         gw_arr[0].savetxt("gw0.dat");
         gw_arr[1].savetxt("gw1.dat");
         sigma_arr[0].savetxt("sigma0.dat");
         sigma_arr[1].savetxt("sigma1.dat");
+        F_upup_static.savetxt("F00_w0.dat");
+        F_updn_static.savetxt("F01_w0.dat");
         }
 
     // prepare df input data
-    fmatsubara_grid const& fgrid = F_upup.template grid<1>(); 
 
     for (int s=0; s<2; s++) { 
         gw_type const& gw_in = gw_arr[s];
@@ -102,7 +113,7 @@ int main(int argc, char *argv[])
             }
         save_grid_object(ar, "gw" + std::to_string(s), gw);
         save_grid_object(ar, "delta" + std::to_string(s), delta);
-        if (plain_text) { 
+        if (plaintext) { 
             gw.savetxt("gw" + std::to_string(s) + "_symm.dat");
             delta.savetxt("delta" + std::to_string(s) + "_symm.dat");
             }
