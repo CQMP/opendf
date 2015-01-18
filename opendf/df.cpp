@@ -28,11 +28,10 @@ template <typename LatticeT>
 typename df_base<LatticeT>::gk_type df_base<LatticeT>::glat_dmft() const
 {
     gk_type glat_dmft(gd0_.grids());
-    int kpts = kgrid_.size();
     for (auto w : fgrid_.points()) { 
         glat_dmft[w] = 1.0 / ( 1.0 / gw_[w] + delta_[w] - disp_.data());  
         //if (!is_float_equal(glat_dmft[w].sum()/pow<D>(kpts), gw[w], 1e-3)) ERROR(glat_dmft[w].sum()/pow<D>(kpts) << " != " << gw[w]);
-        assert(is_float_equal(glat_dmft[w].sum()/pow<NDim>(kpts), gw_[w], 1e-3)); // check consistency of gw, delta and lattice gk
+        assert(is_float_equal(glat_dmft[w].sum()/pow<NDim>(kgrid_.size()), gw_[w], 1e-3)); // check consistency of gw, delta and lattice gk
         }
     return glat_dmft;
 }
@@ -83,6 +82,9 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     bool update_df_sc_mixing = p["update_df_mixing"] | true;
     int df_sc_iter = p["df_sc_iter"] | 1000;
     int nbosonic_ = std::min(int(p["nbosonic"] | 1), magnetic_vertex_.grid().max_n());
+    #ifndef NDEBUG
+    int verbosity = p["verbosity"] | 0; // relevant only in debug mode
+    #endif
 
     int kpts = kgrid_.size();
     int totalkpts = boost::math::pow<NDim>(kpts);
@@ -106,8 +108,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     fvertex_type m_v(fgrid_, fgrid_), d_v(m_v);
     gw_type dual_bubble(fgrid_);
     gk_type full_vertex(gd0_.grids());
-    matrix_type full_m(fgrid_.size(), fgrid_.size());
-    matrix_type full_d(fgrid_.size(), fgrid_.size());
+    matrix_type full_m(fgrid_.size(), fgrid_.size()), full_d(full_m), full_m2(full_m), full_d2(full_d);
 
     
     double diff_gd = 1.0, diff_gd_min = diff_gd;
@@ -153,12 +154,16 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 std::cout << "\tDensity channel  : " << std::flush;
                 full_d = diagrams::BS(dual_bubble_matrix, density_v_matrix, true, false, n_bs_iter, bs_mix);
 
+                // optimize me!
+                full_m2 = diagrams::BS(dual_bubble_matrix, magnetic_v_matrix, true, true, 1, 1.0); // second order correction
+                full_d2 = diagrams::BS(dual_bubble_matrix, density_v_matrix, true, true, 1, 1.0); // second order correction
+
                 for (typename fmatsubara_grid::point iw1 : fgrid_.points())  {
                     int iwn = iw1.index();
-                    std::complex<double> magnetic_val = full_m(iwn, iwn);
-                    std::complex<double> density_val  = full_d(iwn, iwn);
-                    //std::cout <<"m_v : " << magnetic_val << std::endl;
-                    //std::cout <<"d_v : " << density_val << std::endl;
+                    std::complex<double> magnetic_val = full_m(iwn, iwn) - 0.5*full_m2(iwn, iwn);
+                    std::complex<double> density_val  = full_d(iwn, iwn) - 0.5*full_d2(iwn, iwn); 
+                    DEBUG("magnetic : " <<  full_m(iwn, iwn) << " " << 0.5*full_m2(iwn, iwn) << " --> " << magnetic_val, verbosity, 2);
+                    DEBUG("density  : " <<  full_d(iwn, iwn) << " " << 0.5*full_d2(iwn, iwn) << " --> " << density_val, verbosity, 2);
                     for (auto q_pt : other_pts) { 
                         full_vertex.get(std::tuple_cat(std::make_tuple(iw1),q_pt)) = 0.5*(3.0*(magnetic_val)+density_val);
                         };
@@ -169,6 +174,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
             for (auto iw1 : fgrid_.points()) {
                 auto v4r = run_fft(full_vertex[iw1], FFTW_FORWARD)/knorm;
                 auto gdr = run_fft(gd_[iw1], FFTW_BACKWARD);
+                // in chosen notation - a.k.a horizontal ladder with (-0.25 \gamma^4 f^+ f f^+ f ) the sign in +
                 sigma_d_[iw1]+= (1.0*T)*run_fft(v4r*gdr, FFTW_FORWARD); 
                 };
             std::cout << "After W = " << W << " sigma diff = " << sigma_d_.diff(sigma_d_ * 0) << std::endl;
