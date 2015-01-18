@@ -21,18 +21,18 @@ typedef df_type::gw_type gw_type;
 typedef df_type::gk_type gk_type;
 typedef df_type::disp_type disp_type;
 
-alps::params cmdline_params(int argc, char* argv[]);
-inline void print_section (const std::string& str);
-void conflicting_options(const po::variables_map& vm, const char* opt1, const char* opt2);
 
-int main(int argc, char *argv[])
+inline void print_section (const std::string& str)
 {
-    boost::mpi::environment env;
-    boost::mpi::communicator comm;
+  std::cout << std::string(str.size(),'=') << std::endl;
+  std::cout << str << std::endl;
+  std::cout << std::string(str.size(),'=') << std::endl;
+}
 
+void run(alps::params p)
+{
+    boost::mpi::communicator comm;
     print_section("DF ladder in " + std::to_string(D) + " dimensions.");
-    alps::params p = cmdline_params(argc, argv); 
-    
     // read input data
     std::string input_name = p["input"] | "qmc_output.h5";
     std::cout << "Reading data from " << input_name << std::endl;
@@ -106,6 +106,24 @@ int main(int argc, char *argv[])
         }
 }
 
+
+//
+// build command line executable
+// 
+
+#ifndef BUILD_PYTHON_MODULE
+alps::params cmdline_params(int argc, char* argv[]);
+void conflicting_options(const po::variables_map& vm, const char* opt1, const char* opt2);
+
+int main(int argc, char *argv[])
+{
+    boost::mpi::environment env(argc, argv);
+
+    alps::params p = cmdline_params(argc, argv); 
+    run(p);
+}
+
+
 /// Check that 2 cmd options are not specified at the same time.
 void conflicting_options(const po::variables_map& vm, const char* opt1, const char* opt2);
 
@@ -154,13 +172,7 @@ alps::params cmdline_params(int argc, char* argv[])
     
     return p;
 }
-
-inline void print_section (const std::string& str)
-{
-  std::cout << std::string(str.size(),'=') << std::endl;
-  std::cout << str << std::endl;
-  std::cout << std::string(str.size(),'=') << std::endl;
-}
+#endif 
 
 void conflicting_options(const po::variables_map& vm, const char* opt1, const char* opt2)
 {
@@ -168,5 +180,46 @@ void conflicting_options(const po::variables_map& vm, const char* opt1, const ch
         throw std::logic_error(std::string("Conflicting options '") + opt1 + "' and '" + opt2 + "'.");
 }
 
+
+//
+// build python module
+//
+
+#ifdef BUILD_PYTHON_MODULE
+#include <boost/python.hpp>
+//compile it as a python module (requires boost::python library)
+
+void solve(boost::python::dict py_parms)
+{
+    //alps::params p(parms_);
+    //std::string output_file = boost::lexical_cast<std::string>(parms["BASENAME"]|"results")+std::string(".out.h5");
+    alps::params p;
+    #define PYCONV(x, T) p[x] = boost::python::extract<T>(py_parms.attr(x));
+    PYCONV("df_sc_mix", double)
+    PYCONV("df_sc_cutoff", double)
+    PYCONV("bs_mix", double)
+    PYCONV("hopping", double)
+    
+    PYCONV("kpts", int);
+    PYCONV("df_sc_iter", int);
+    PYCONV("nbosonic", int);
+    PYCONV("n_bs_iter", int);
+    PYCONV("plaintext", int);
+
+    PYCONV("input", std::string);
+    PYCONV("output", std::string);
+
+    PYCONV("update_df_mixing", bool);
+    PYCONV("eval_bs_sc", bool);
+    #undef PYCONV
+    run(p);
+};
+
+    BOOST_PYTHON_MODULE(libpyhub_df)
+    {
+        using namespace boost::python;
+        def("solve",&solve); //define python-callable run method
+    };
+#endif
 
 

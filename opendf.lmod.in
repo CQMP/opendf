@@ -11,3 +11,4 @@ setenv      BOLD_HYB_INC    $root/include
 setenv      BOLD_HYB_BIN    $root/bin
 prepend-path      PATH      $root/bin
 prepend-path      LD_LIBRARY_PATH $root/lib
+prepend-path      PYTHONPATH $root/lib/python

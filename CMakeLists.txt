@@ -88,14 +88,38 @@ find_package (HDF5 REQUIRED)
     link_libraries(${HDF5_LIBRARIES})
 # ALPSCore 
 find_package(ALPSCore REQUIRED COMPONENTS hdf5 accumulators mc params)
-    include_directories(${ALPSCore_INCLUDE_DIRS})
-    link_libraries(${ALPSCore_LIBRARIES}) 
-# Boost    
+
+# Boost + optional : python  + boost::python + alpscore::python 
 find_package (Boost REQUIRED COMPONENTS mpi serialization filesystem system chrono program_options)
     message(STATUS "Boost includes: " ${Boost_INCLUDE_DIRS} )
     message(STATUS "Boost libraries: " ${Boost_LIBRARIES} )
+
+option(BuildPython "Build python modules" OFF)
+if (BuildPython) 
+    find_package (Boost REQUIRED COMPONENTS mpi serialization filesystem system chrono program_options python)
+    find_package(ALPSCore REQUIRED COMPONENTS hdf5 accumulators mc params)
+    find_package (PythonLibs REQUIRED)
+    include_directories(${PYTHON_INCLUDE_DIRS})
+    message(STATUS "Python includes: " ${PYTHON_INCLUDE_DIRS})
+    message(STATUS "Python libraries: " ${PYTHON_LIBRARIES})
+    link_libraries(${PYTHON_LIBRARIES})
+    set(BOLD_HYB_BUILD_PYTHON True)
+endif(BuildPython)
+    
     include_directories(${Boost_INCLUDE_DIRS})
     link_libraries(${Boost_LIBRARIES})
+    include_directories(${ALPSCore_INCLUDE_DIRS})
+    link_libraries(${ALPSCore_LIBRARIES}) 
+
+# MPI
+find_package (MPI)
+    message(STATUS "MPI includes: " ${MPI_INCLUDE_DIRS} )
+    message(STATUS "MPI CXX libs: " ${MPI_CXX_LIBRARIES} )
+    message(STATUS "MPI definitions : " ${MPI_CXX_COMPILE_FLAGS} ${MPI_C_COMPILE_FLAGS})
+    add_definitions(${MPI_CXX_COMPILE_FLAGS}  ${MPI_C_COMPILE_FLAGS})
+	include_directories(${MPI_INCLUDE_DIRS})
+    link_libraries(${MPI_CXX_LIBRARIES})
+
 # fftw
 find_package (fftw REQUIRED)
     message(STATUS "FFTW includes: " ${FFTW_INCLUDE_DIR} )
