@@ -151,6 +151,7 @@ alps::params cmdline_params(int argc, char* argv[])
         ("input",           po::value<std::string>()->default_value("output.h5"), "input file with vertices and gf")
         ("output",          po::value<std::string>()->default_value("output.h5"), "output file");
     bool_opts.add_options()
+        ("resume", po::value<bool>()->default_value(1), "try resuming calculation")
         ("update_df_mixing", po::value<bool>()->default_value(1), "update mixing of dual gf for better accuracy")
         ("eval_bs_sc", po::value<bool>()->default_value(0), "evaluate Bethe-Salpeter equation self-consistently");
 
@@ -211,6 +212,7 @@ void solve(boost::python::dict py_parms)
 
     PYCONV("update_df_mixing", bool);
     PYCONV("eval_bs_sc", bool);
+    PYCONV("resume", bool);
     #undef PYCONV
     run(p);
 };

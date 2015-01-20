@@ -29,7 +29,7 @@ public:
 
     gk_type glat() const { return this->glat_; }
     gk_type sigma_lat(double mu = 0) const;
-    gk_type const& dual_selfenergy() const { return this->sigma_d_; }
+    gk_type const& sigma_d() const { return this->sigma_d_; }
     gw_type glat_loc() const;
 
 protected: 

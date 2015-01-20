@@ -97,7 +97,7 @@ find_package (Boost REQUIRED COMPONENTS mpi serialization filesystem system chro
 option(BuildPython "Build python modules" OFF)
 if (BuildPython) 
     find_package (Boost REQUIRED COMPONENTS mpi serialization filesystem system chrono program_options python)
-    find_package(ALPSCore REQUIRED COMPONENTS hdf5 accumulators mc params)
+    find_package(ALPSCore REQUIRED COMPONENTS hdf5 accumulators mc params python)
     find_package (PythonLibs REQUIRED)
     include_directories(${PYTHON_INCLUDE_DIRS})
     message(STATUS "Python includes: " ${PYTHON_INCLUDE_DIRS})

@@ -21,6 +21,8 @@ void save_data(SCType const& sc, alps::params p)
     int kpts = kgrid.size();
     double knorm = pow<D>(kpts);
 
+    auto w0 = fgrid.find_nearest(I*PI / beta);
+
     std::string output_file = p["output"] | "output.h5";
     std::string top = "/df";
 
@@ -30,7 +32,7 @@ void save_data(SCType const& sc, alps::params p)
     // save dual quantities
     save_grid_object(ar, top + "/gd", sc.gd(), plaintext > 1);
     save_grid_object(ar, top + "/gd0", sc.gd(), plaintext > 1);
-    save_grid_object(ar, top + "/sigma_d", sc.gd(), plaintext > 1);
+    save_grid_object(ar, top + "/sigma_d", sc.sigma_d(), plaintext > 1);
 
     // save lattice gf
     save_grid_object(ar, top + "/glat", sc.glat(), plaintext > 1);
@@ -46,10 +48,11 @@ void save_data(SCType const& sc, alps::params p)
     save_grid_object(ar, top + "/sigma_local", sigma_local, plaintext > 0);
 
     // save cut of lattice self-energy at the first matsubara
-    auto w0 = fgrid.find_nearest(I*PI / beta);
     disp_type sigma_w0(tuple_tools::repeater<kmesh,D>::get_tuple(kgrid));
     sigma_w0.data() = sigma_lat[w0];
     save_grid_object(ar, top + "/sigma_w0", sigma_w0, plaintext > 0);
+    sigma_w0.data() = sc.sigma_d()[w0];
+    save_grid_object(ar, top + "/sigma_d_w0", sigma_w0, plaintext > 0);
 
     // save dmft self-energy for a consistency check
     save_grid_object(ar, top + "/sigma_dmft", sc.sigma_dmft(mu), plaintext > 0);
