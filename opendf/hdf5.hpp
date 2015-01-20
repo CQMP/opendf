@@ -136,6 +136,7 @@ inline void save_grid_object(alps::hdf5::archive & ar, std::string const & path,
 
 template <typename T> 
 inline T load_grid_object(alps::hdf5::archive & ar, std::string const & path) {  
+    std::cout << "hdf5 : loading " << typeid(T).name() << " from " << path << std::endl;
     auto grids = hdf5_grid_tuple<typename T::grid_tuple>::load(ar,path+"/grids");
     auto data = hdf5_loader<typename T::container_type>::load(ar,path+"/data");
     return T(grids,data);

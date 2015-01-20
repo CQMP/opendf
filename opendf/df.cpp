@@ -81,7 +81,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     double df_sc_mix = p["df_sc_mix"] | 1.0;
     bool update_df_sc_mixing = p["update_df_mixing"] | true;
     int df_sc_iter = p["df_sc_iter"] | 1000;
-    int nbosonic_ = std::min(int(p["nbosonic"] | 1), magnetic_vertex_.grid().max_n());
+    int nbosonic_ = std::min(int(p["nbosonic"] | 1), magnetic_vertex_.grid().max_n() + 1);
     #ifndef NDEBUG
     int verbosity = p["verbosity"] | 0; // relevant only in debug mode
     #endif
@@ -92,6 +92,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     double beta = fgrid_.beta();
     double T = 1.0/beta;
     bmatsubara_grid const& bgrid = magnetic_vertex_.grid();
+    std::cout << "Vertices are defined on bosonic grid : " << bgrid << std::endl; 
     const auto unique_kpts = lattice_t::getUniqueBZPoints(kgrid_);
 
     gk_type gd_initial(gd_);

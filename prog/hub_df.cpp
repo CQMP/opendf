@@ -35,20 +35,22 @@ void run(alps::params p)
     print_section("DF ladder in " + std::to_string(D) + " dimensions.");
     // read input data
     std::string input_name = p["input"] | "qmc_output.h5";
-    std::cout << "Reading data from " << input_name << std::endl;
+    std::string top = p["inp_section"] | "";
+    std::cout << "Reading data from " << input_name << " /" << top << std::endl;
+
     alps::hdf5::archive ar(input_name, "r");
 
     std::array<vertex_type, 2> vertex_input = {{ 
-        load_grid_object<vertex_type>(ar, "F00"), 
-        load_grid_object<vertex_type>(ar, "F01") }}; 
+        load_grid_object<vertex_type>(ar, top + "/F00"), 
+        load_grid_object<vertex_type>(ar, top + "/F01") }}; 
 
     std::array<gw_type, 2> gw_arr = {{ 
-        load_grid_object<gw_type>(ar, "gw0"), 
-        load_grid_object<gw_type>(ar, "gw1") }} ;
+        load_grid_object<gw_type>(ar, top + "/gw0"), 
+        load_grid_object<gw_type>(ar, top + "/gw1") }} ;
 
     std::array<gw_type, 2> delta_arr = {{ 
-        load_grid_object<gw_type>(ar, "delta0"), 
-        load_grid_object<gw_type>(ar, "delta1") }} ;
+        load_grid_object<gw_type>(ar, top + "/delta0"), 
+        load_grid_object<gw_type>(ar, top + "/delta1") }} ;
 
     // fix spin symmerty
     if (gw_arr[0].diff(gw_arr[1]) > 1e-8) 
@@ -120,7 +122,9 @@ int main(int argc, char *argv[])
     boost::mpi::environment env(argc, argv);
 
     alps::params p = cmdline_params(argc, argv); 
-    run(p);
+    try { run(p); }
+    catch (std::exception &e) { std::cerr << e.what() << std::endl; exit(1); };
+    
 }
 
 
@@ -149,6 +153,7 @@ alps::params cmdline_params(int argc, char* argv[])
         ("plaintext,p",      po::value<int>()->default_value(1), "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)");
     string_opts.add_options()
         ("input",           po::value<std::string>()->default_value("output.h5"), "input file with vertices and gf")
+        ("inp_section",     po::value<std::string>()->default_value("dmft"), "input section (default : 'dmft')")
         ("output",          po::value<std::string>()->default_value("output.h5"), "output file");
     bool_opts.add_options()
         ("resume", po::value<bool>()->default_value(1), "try resuming calculation")

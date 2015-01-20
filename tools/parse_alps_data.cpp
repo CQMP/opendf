@@ -39,15 +39,16 @@ int main(int argc, char *argv[])
     bool plaintext = vm["plaintext"].as<bool>();
 
     std::string outfile_name = "qmc_output.h5";
-    std::cout << "Saving data to " << outfile_name << std::endl;
+    std::string top = "/dmft";
+    std::cout << "Saving data to " << outfile_name << top << std::endl;
     alps::hdf5::archive ar(outfile_name, "w");
 
     auto gw_arr = read_gw(gw_file, false, true); 
-    save_grid_object(ar, "gw0_input", gw_arr[0]);
-    save_grid_object(ar, "gw1_input", gw_arr[1]);
+    save_grid_object(ar, top + "/gw0_input", gw_arr[0]);
+    save_grid_object(ar, top + "/gw1_input", gw_arr[1]);
     auto sigma_arr = read_gw(sigma_file, true, false);
-    save_grid_object(ar, "sigma0_input", sigma_arr[0]);
-    save_grid_object(ar, "sigma1_input", sigma_arr[1]);
+    save_grid_object(ar, top + "/sigma0_input", sigma_arr[0]);
+    save_grid_object(ar, top + "/sigma1_input", sigma_arr[1]);
 
     fmatsubara_grid fgrid_gw = gw_arr[0].grid();
     gw_type iw(fgrid_gw); for (auto x : fgrid_gw.points()) iw[x] = x; 
@@ -56,7 +57,7 @@ int main(int argc, char *argv[])
     std::cout << "mu = " << mu << std::endl;
     for (int s = 0; s < 2; s++) { 
         delta_arr[s] =  iw + mu - sigma_arr[s] - 1./gw_arr[s];
-        save_grid_object(ar, "delta" + std::to_string(s) + "_input", delta_arr[s]);
+        save_grid_object(ar, top + "/delta" + std::to_string(s) + "_input", delta_arr[s]);
         }
 
     double beta = gw_arr[0].grid().beta();
@@ -67,8 +68,8 @@ int main(int argc, char *argv[])
     vertex_type const& F_upup = std::get<0>(input_vertex_array)*(-1.);
     vertex_type const& F_updn = std::get<1>(input_vertex_array)*(-1.);
 
-    save_grid_object(ar, "F00", F_upup);
-    save_grid_object(ar, "F01", F_updn);
+    save_grid_object(ar, top + "/F00", F_upup);
+    save_grid_object(ar, top + "/F01", F_updn);
 
     bmatsubara_grid const& bgrid = F_upup.template grid<0>();
     fmatsubara_grid const& fgrid = F_upup.template grid<1>(); 
@@ -111,8 +112,8 @@ int main(int argc, char *argv[])
                 delta[x] = std::conj(delta_in[p]);
                 }
             }
-        save_grid_object(ar, "gw" + std::to_string(s), gw);
-        save_grid_object(ar, "delta" + std::to_string(s), delta);
+        save_grid_object(ar, top + "/gw" + std::to_string(s), gw);
+        save_grid_object(ar, top + "/delta" + std::to_string(s), delta);
         if (plaintext) { 
             gw.savetxt("gw" + std::to_string(s) + "_symm.dat");
             delta.savetxt("delta" + std::to_string(s) + "_symm.dat");

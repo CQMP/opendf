@@ -116,8 +116,10 @@ int main(int argc, char *argv[])
     save_grid_object(ar, top + "/density_vertex", density_vertex, plaintext > 1); 
     save_grid_object(ar, top + "/F00", F_uuuu, plaintext > 1); 
     save_grid_object(ar, top + "/F01", F_uudd, plaintext > 1); 
-    save_grid_object(ar, top + "/gw", gw, plaintext > 0); 
-    save_grid_object(ar, top + "/delta", delta, plaintext > 0); 
+    save_grid_object(ar, top + "/gw0", gw, plaintext > 0); 
+    save_grid_object(ar, top + "/gw1", gw, plaintext > 0); 
+    save_grid_object(ar, top + "/delta0", delta, plaintext > 0); 
+    save_grid_object(ar, top + "/delta1", delta, plaintext > 0); 
     
 }
 
