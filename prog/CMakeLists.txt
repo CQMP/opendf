@@ -13,11 +13,12 @@ foreach(exec ${execs})
     install ( TARGETS ${exec} DESTINATION bin )
 endforeach()
 
-# build python module
-foreach(exec ${execs})
-    add_library(py${exec} MODULE ${exec}.cpp)
-    target_link_libraries(py${exec} ${opendf_name})
-    target_compile_definitions(py${exec} PUBLIC -DBUILD_PYTHON_MODULE -DLATTICE_${df_lattice})
-    install ( TARGETS py${exec} DESTINATION lib/python )
-endforeach()
-
+if (BuildPython) 
+    # build python module
+    foreach(exec ${execs})
+        add_library(py${exec} MODULE ${exec}.cpp)
+        target_link_libraries(py${exec} ${opendf_name})
+        target_compile_definitions(py${exec} PUBLIC -DBUILD_PYTHON_MODULE -DLATTICE_${df_lattice})
+        install ( TARGETS py${exec} DESTINATION lib/python )
+    endforeach()
+endif (BuildPython) 
