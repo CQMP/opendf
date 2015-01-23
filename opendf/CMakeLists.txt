@@ -5,7 +5,8 @@ set (df_src
     df.hpp df.cpp 
     )
 
-add_library(${opendf_name} SHARED ${df_src})
+#add_library(${opendf_name} SHARED ${df_src})
+add_library(${opendf_name} STATIC ${df_src})
 
 install(TARGETS ${opendf_name}
     ARCHIVE DESTINATION lib

@@ -150,7 +150,7 @@ std::array<gw_type,2> read_gw(std::string fname, bool complex_data, bool skip_fi
         double v, v2=0; 
         in >> v; 
         if (in.eof()) break;
-        grid_vals.push_back(I*v);
+        grid_vals.push_back(std::make_tuple(I*v));
 
         in >> v; 
         v2 = v; v=0;

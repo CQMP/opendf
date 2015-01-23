@@ -11,7 +11,7 @@ df_base<LatticeT>::df_base(gw_type gw, gw_type Delta, lattice_t lattice, kmesh k
     kgrid_(kgrid),
     gw_(gw),
     delta_(Delta),
-    disp_(gftools::tuple_tools::repeater<kmesh,NDim>::get_array(kgrid_)), 
+    disp_(gftools::tuple_tools::repeater<kmesh,NDim>::get_tuple(kgrid_)), 
     gd0_(std::tuple_cat(std::forward_as_tuple(fgrid_), gftools::tuple_tools::repeater<kmesh,NDim>::get_array(kgrid_))), 
     gd_(gd0_.grids()),
     sigma_d_(gd0_.grids()),
