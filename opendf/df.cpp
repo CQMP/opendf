@@ -117,7 +117,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
 
     for (size_t nd_iter=0; nd_iter<df_sc_iter && diff_gd > df_sc_cutoff; ++nd_iter) { 
         sigma_d_ = 0.0;
-        std::cout << "DF iteration " << nd_iter << std::endl;
+        std::cout << std::endl << "DF iteration " << nd_iter << std::endl;
 
         for (int Windex = -nbosonic_ + 1; Windex < nbosonic_; Windex++) { 
             std::complex<double> W_val = BMatsubara(Windex, beta);

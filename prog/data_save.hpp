@@ -29,6 +29,9 @@ void save_data(SCType const& sc, alps::params p)
     std::cout << "Saving data to " << output_file << top << std::endl; 
     alps::hdf5::archive ar(output_file, "w");
 
+    // save parameters
+    ar[top + "/parameters"] << p;
+
     // save dual quantities
     save_grid_object(ar, top + "/gd", sc.gd(), plaintext > 1);
     save_grid_object(ar, top + "/gd0", sc.gd(), plaintext > 1);

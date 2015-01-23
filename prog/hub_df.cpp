@@ -102,7 +102,7 @@ void run(alps::params p)
             << duration_cast<seconds>(end-start).count()%60 << "s " 
             << duration_cast<milliseconds>(end-start).count()%1000 << "ms " 
             << std::endl;
-        p["run_time"] = duration_cast<seconds>(end-start).count();
+        p["run_time"] = int(duration_cast<seconds>(end-start).count());
 
         save_data(DF, p); 
         }

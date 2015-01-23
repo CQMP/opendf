@@ -3,6 +3,7 @@
  */
 
 #include <boost/program_options.hpp>
+#include <alps/params.hpp>
 #include <Eigen/Core>
 #include <gftools.hpp>
 #include "opendf/hdf5.hpp"
@@ -16,48 +17,41 @@ typedef grid_object<std::complex<double>, fmatsubara_grid> gw_type;
 typedef grid_object<std::complex<double>, fmatsubara_grid, kmesh, kmesh> gk_type;
 typedef grid_object<std::complex<double>, kmesh, kmesh> disp_type;
 
+alps::params cmdline_params(int argc, char* argv[]);
 std::array<gw_type,2> read_gw(std::string fname, bool complex_data, bool skip_first_line = false);
 std::array<vertex_type, 2> read_vertex(std::string input_file, double beta, bool skip_first_line = false);
 
 int main(int argc, char *argv[])
 {
-    // parse command line options
-    po::options_description desc("FK diagrams evaluator"); 
-    desc.add_options()
-        ("vertex_file", po::value<std::string>()->default_value("vertexF.dat"), "vertex file")
-        ("gw_file", po::value<std::string>()->default_value("gw.dat"), "local gw file")
-        ("sigma_file", po::value<std::string>()->default_value("sigma.dat"), "local sigma file")
-        ("plaintext,p", po::value<bool>()->default_value(false), "save plaintext data")
-        ("help", "produce help message");
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help")) { std::cout << desc << std::endl; exit(0); }
+    
+    alps::params p = cmdline_params(argc, argv); 
 
-    std::string vertex_file=vm["vertex_file"].as<std::string>();
-    std::string gw_file=vm["gw_file"].as<std::string>();
-    std::string sigma_file=vm["sigma_file"].as<std::string>();
-    bool plaintext = vm["plaintext"].as<bool>();
+    std::string vertex_file=p["vertex_file"];
+    std::string gw_file=p["gw_file"];
+    std::string sigma_file=p["sigma_file"];
+    int plaintext = p["plaintext"];
 
     std::string outfile_name = "qmc_output.h5";
     std::string top = "/dmft";
-    std::cout << "Saving data to " << outfile_name << top << std::endl;
+    std::string input = "/dmft_input";
+    std::cout << "Saving input data to " << outfile_name << input << std::endl;
     alps::hdf5::archive ar(outfile_name, "w");
 
     auto gw_arr = read_gw(gw_file, false, true); 
-    save_grid_object(ar, top + "/gw0_input", gw_arr[0]);
-    save_grid_object(ar, top + "/gw1_input", gw_arr[1]);
+    save_grid_object(ar, input + "/gw0_input", gw_arr[0]);
+    save_grid_object(ar, input + "/gw1_input", gw_arr[1]);
     auto sigma_arr = read_gw(sigma_file, true, false);
-    save_grid_object(ar, top + "/sigma0_input", sigma_arr[0]);
-    save_grid_object(ar, top + "/sigma1_input", sigma_arr[1]);
+    save_grid_object(ar, input + "/sigma0_input", sigma_arr[0]);
+    save_grid_object(ar, input + "/sigma1_input", sigma_arr[1]);
 
     fmatsubara_grid fgrid_gw = gw_arr[0].grid();
     gw_type iw(fgrid_gw); for (auto x : fgrid_gw.points()) iw[x] = x; 
     std::array<gw_type, 2> delta_arr = gftools::tuple_tools::repeater<gw_type, 2>::get_array(gw_type(fgrid_gw));
-    double mu = sigma_arr[0][0].real();
+    double mu = p["mu_defaulted"].cast<bool>()?sigma_arr[0][0].real():p["mu"].cast<double>();
     std::cout << "mu = " << mu << std::endl;
     for (int s = 0; s < 2; s++) { 
         delta_arr[s] =  iw + mu - sigma_arr[s] - 1./gw_arr[s];
-        save_grid_object(ar, top + "/delta" + std::to_string(s) + "_input", delta_arr[s]);
+        save_grid_object(ar, input + "/delta" + std::to_string(s) + "_input", delta_arr[s]);
         }
 
     double beta = gw_arr[0].grid().beta();
@@ -65,14 +59,29 @@ int main(int argc, char *argv[])
     assert(sigma_arr[0].grid().beta() == gw_arr[0].grid().beta());
     auto input_vertex_array = read_vertex(vertex_file, beta);
     // There is a minus sign between DF and DGA notations :-(
-    vertex_type const& F_upup = std::get<0>(input_vertex_array)*(-1.);
-    vertex_type const& F_updn = std::get<1>(input_vertex_array)*(-1.);
+    vertex_type const& F_upup_input = std::get<0>(input_vertex_array)*(-1.);
+    vertex_type const& F_updn_input = std::get<1>(input_vertex_array)*(-1.);
 
-    save_grid_object(ar, top + "/F00", F_upup);
-    save_grid_object(ar, top + "/F01", F_updn);
 
-    bmatsubara_grid const& bgrid = F_upup.template grid<0>();
-    fmatsubara_grid const& fgrid = F_upup.template grid<1>(); 
+    bmatsubara_grid const& bgrid_input = F_upup_input.template grid<0>();
+    fmatsubara_grid const& fgrid_input = F_upup_input.template grid<1>(); 
+    save_grid_object(ar, input + "/F00_input", F_upup_input);
+    save_grid_object(ar, input + "/F01_input", F_updn_input);
+
+    // now move on to export DF-ready data
+    std::cout << "Saving data to " << outfile_name << top << std::endl;
+    int wfmax = std::min(p["nfermionic"].cast<int>(), fgrid_input.max_n() + 1);
+    int wbmax = std::min(p["nbosonic"].cast<int>(), bgrid_input.max_n() + 1);
+    fmatsubara_grid fgrid(-wfmax, wfmax, beta);
+    bmatsubara_grid bgrid(-wbmax+1, wbmax, beta);
+        
+    vertex_type F_upup(std::make_tuple(bgrid,fgrid,fgrid));
+    F_upup.copy_interpolate(F_upup_input);
+    vertex_type F_updn(std::make_tuple(bgrid,fgrid,fgrid));
+    F_updn.copy_interpolate(F_updn_input);
+
+    save_grid_object(ar, top + "/F00", F_upup, plaintext > 1);
+    save_grid_object(ar, top + "/F01", F_updn, plaintext > 1);
 
     auto W0 = bgrid.find_nearest(0.0);
     fvertex_type F_upup_static(fgrid,fgrid), F_updn_static(fgrid,fgrid);
@@ -119,6 +128,8 @@ int main(int argc, char *argv[])
             delta.savetxt("delta" + std::to_string(s) + "_symm.dat");
             }
         }
+
+        ar[top + "/parameters"] << p;
 }
 
 std::array<gw_type,2> read_gw(std::string fname, bool complex_data, bool skip_first_line)
@@ -213,4 +224,44 @@ std::array<vertex_type, 2> read_vertex(std::string fname, double beta, bool skip
     return {{ std::move(out_upup), std::move(out_updn) }};
 }
 
+alps::params cmdline_params(int argc, char* argv[])
+{
+    alps::params p;
+
+	po::options_description generic_opts("generic"), double_opts("double opts"), vec_double_opts("vector<double> opts"), 
+		int_opts("int_opts"), string_opts("string_opts"), bool_opts("bool opts");
+
+    generic_opts.add_options()
+        ("help",          "help");
+    double_opts.add_options()
+        ("mu", po::value<double>()->default_value(0.0), "chemical potential (measured from half-filling level)");
+    int_opts.add_options()
+        ("plaintext,p",      po::value<int>()->default_value(0), "save additionally to plaintext files")
+        ("nbosonic",      po::value<int>()->default_value(1024), "max number of non-negative bosonic Matsubara frequencies")
+        ("nfermionic",      po::value<int>()->default_value(1024), "max number of positive fermionic Matsubara frequencies");
+    string_opts.add_options()
+        ("vertex_file", po::value<std::string>()->default_value("vertexF.dat"), "vertex file")
+        ("gw_file", po::value<std::string>()->default_value("gw.dat"), "local gw file")
+        ("sigma_file", po::value<std::string>()->default_value("sigma.dat"), "local sigma file");
+
+    po::options_description cmdline_opts;
+    cmdline_opts.add(double_opts).add(int_opts).add(string_opts).add(generic_opts).add(bool_opts).add(vec_double_opts);
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, cmdline_opts, po::command_line_style::unix_style ^ po::command_line_style::allow_short), vm);
+
+    // Help options
+    if (vm.count("help")) { 
+        std::cout << "Program options : \n" << cmdline_opts << std::endl; exit(0);  }
+    
+    p["mu_defaulted"]=vm["mu"].defaulted();
+
+    for (auto x : double_opts.options()) p[x->long_name()] = vm[x->long_name()].as<double>();
+    for (auto x : int_opts.options()) p[x->long_name()] = vm[x->long_name()].as<int>();
+    for (auto x : string_opts.options()) p[x->long_name()] = vm[x->long_name()].as<std::string>();
+    for (auto x : bool_opts.options()) p[x->long_name()] = vm[x->long_name()].as<bool>();
+    for (auto x : vec_double_opts.options()) p[x->long_name()] = vm[x->long_name()].as<std::vector<double>>();
+    
+    return p;
+}
 
