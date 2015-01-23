@@ -5,7 +5,9 @@
 cmake_minimum_required (VERSION 2.8)
 message ("\ndual diagrams configuration\n")
 # mac os rpath policy
-cmake_policy(SET CMP0042 NEW)
+if (POLICY CMP0042)
+    cmake_policy(SET CMP0042 NEW)
+endif()
 
 # Disable build in source
 message(STATUS ${CMAKE_MODULE_PATH})
