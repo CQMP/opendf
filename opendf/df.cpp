@@ -156,8 +156,8 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 full_d = diagrams::BS(dual_bubble_matrix, density_v_matrix, true, false, n_bs_iter, bs_mix);
 
                 // optimize me!
-                full_m2 = diagrams::BS(dual_bubble_matrix, magnetic_v_matrix, true, true, 1, 1.0); // second order correction
-                full_d2 = diagrams::BS(dual_bubble_matrix, density_v_matrix, true, true, 1, 1.0); // second order correction
+                full_m2 = diagrams::BS(dual_bubble_matrix, magnetic_v_matrix, true, true, 1, 1.0, true); // second order correction
+                full_d2 = diagrams::BS(dual_bubble_matrix, density_v_matrix, true, true, 1, 1.0, true); // second order correction
 
                 for (typename fmatsubara_grid::point iw1 : fgrid_.points())  {
                     int iwn = iw1.index();
