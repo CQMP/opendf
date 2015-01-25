@@ -95,9 +95,9 @@ int main(int argc, char *argv[])
     glat_loc.savetxt("gloc_test.dat");
 
     gw_type gloc_comp(fgrid);
-    std::vector<std::complex<double>> v = 
-        {{ 4.014511542792e-02, 5.049725242672e-02, 6.137306974871e-02, 4.125122660845e-02, 
-          -4.125122660845e-02, -6.137306974871e-02, -5.049725242672e-02, -4.014511542792e-02 }};
+    std::vector<std::complex<double>> v = {{  
+        4.015141253959e-02, 5.052237697122e-02, 6.151383824790e-02, 4.184934626669e-02,
+        -4.184934626669e-02, -6.151383824790e-02, -5.052237697122e-02, -4.015141253959e-02 }};
     std::copy(v.begin(), v.end(), gloc_comp.data().data());
     gloc_comp *= I;
     std::cout << "local gf comparison : " << std::endl;
