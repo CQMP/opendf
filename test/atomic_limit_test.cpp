@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "opendf/lattice_traits.hpp"
-#include "opendf/df.hpp"
+#include "opendf/df_hubbard.hpp"
 
 using namespace open_df;
 

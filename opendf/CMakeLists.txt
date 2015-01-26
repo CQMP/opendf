@@ -2,7 +2,8 @@ include_directories (.)
 
 set (df_src 
     diagrams.hpp
-    df.hpp df.cpp 
+    df_base.hpp df_base.cpp 
+    df_hubbard.hpp df_hubbard.cpp 
     )
 
 #add_library(${opendf_name} SHARED ${df_src})

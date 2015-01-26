@@ -2,7 +2,7 @@
 #include <boost/program_options.hpp>
 
 #include "opendf/lattice_traits.hpp"
-#include "opendf/df.hpp"
+#include "opendf/df_hubbard.hpp"
 
 namespace po = boost::program_options;
 using namespace open_df;

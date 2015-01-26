@@ -4,7 +4,7 @@
 #include <alps/params.hpp>
 
 #include <opendf/lattice_traits.hpp>
-#include <opendf/df.hpp>
+#include <opendf/df_hubbard.hpp>
 
 #include "data_save.hpp"
 
