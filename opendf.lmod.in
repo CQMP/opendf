@@ -4,11 +4,12 @@ set     name        opendf
 set     root        @CMAKE_INSTALL_PREFIX@
 
 
-setenv      BOLD_HYB_DIR    $root
-setenv      BOLD_HYB_ROOT   $root
-setenv      BOLD_HYB_LIB    $root/lib
-setenv      BOLD_HYB_INC    $root/include
-setenv      BOLD_HYB_BIN    $root/bin
+setenv      OPENDF_DIR    $root
+setenv      OPENDF_ROOT   $root
+setenv      OPENDF_LIB    $root/lib
+setenv      OPENDF_INC    $root/include
+setenv      OPENDF_BIN    $root/bin
+
 prepend-path      PATH      $root/bin
 prepend-path      LD_LIBRARY_PATH $root/lib
 prepend-path      PYTHONPATH $root/lib/python
