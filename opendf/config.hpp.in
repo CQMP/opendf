@@ -3,7 +3,10 @@
 #include <boost/math/special_functions.hpp>
 #include <Eigen/Core>
 #include <gftools.hpp> 
-#include "hdf5.hpp"
+#include <opendf/hdf5.hpp>
+
+// mpi
+#cmakedefine OPENDF_ENABLE_MPI
 
 namespace open_df { 
     typedef Eigen::MatrixXcd matrix_type; 

@@ -1,6 +1,6 @@
 #pragma once 
 
-#include "config.hpp"
+#include <opendf/config.hpp>
 
 namespace open_df {
 

@@ -1,6 +1,7 @@
 #pragma once 
-#include "config.hpp"
 #include <alps/params.hpp>
+
+#include <opendf/config.hpp>
 
 namespace open_df { 
 

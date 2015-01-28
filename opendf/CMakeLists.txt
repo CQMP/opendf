@@ -1,5 +1,7 @@
 include_directories (.)
 
+configure_file(${CMAKE_SOURCE_DIR}/opendf/config.hpp.in ${CMAKE_BINARY_DIR}/opendf/config.hpp)
+
 set (df_src 
     diagrams.hpp
     df_base.hpp df_base.cpp 

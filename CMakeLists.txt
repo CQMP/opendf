@@ -90,16 +90,43 @@ find_package (HDF5 REQUIRED)
     link_libraries(${HDF5_LIBRARIES})
 # ALPSCore 
 find_package(ALPSCore REQUIRED COMPONENTS hdf5 accumulators mc params)
+    include_directories(${ALPSCore_INCLUDE_DIRS})
+    link_libraries(${ALPSCore_LIBRARIES}) 
 
 # Boost + optional : python  + boost::python + alpscore::python 
-find_package (Boost REQUIRED COMPONENTS mpi serialization filesystem system chrono program_options)
+find_package (Boost REQUIRED COMPONENTS serialization filesystem system chrono program_options)
     message(STATUS "Boost includes: " ${Boost_INCLUDE_DIRS} )
     message(STATUS "Boost libraries: " ${Boost_LIBRARIES} )
+    include_directories(${Boost_INCLUDE_DIRS})
+    link_libraries(${Boost_LIBRARIES})
+
+# MPI
+option(EnableMPI "Use MPI" ON)
+if (EnableMPI)
+
+    find_package (MPI)
+        message(STATUS "MPI includes: " ${MPI_INCLUDE_DIRS} )
+        message(STATUS "MPI CXX libs: " ${MPI_CXX_LIBRARIES} )
+        message(STATUS "MPI definitions : " ${MPI_CXX_COMPILE_FLAGS} ${MPI_C_COMPILE_FLAGS})
+        add_definitions(${MPI_CXX_COMPILE_FLAGS}  ${MPI_C_COMPILE_FLAGS})
+        include_directories(${MPI_INCLUDE_DIRS})
+        link_libraries(${MPI_CXX_LIBRARIES})
+
+    find_package (Boost REQUIRED COMPONENTS mpi)
+    message(STATUS "Boost mpi includes: " ${Boost_INCLUDE_DIRS} )
+    message(STATUS "Boost mpi libraries: " ${Boost_LIBRARIES} )
+    include_directories(${Boost_INCLUDE_DIRS})
+    link_libraries(${Boost_LIBRARIES})
+
+    set(OPENDF_ENABLE_MPI TRUE)
+endif(EnableMPI)
 
 option(BuildPython "Build python modules" OFF)
 if (BuildPython) 
-    find_package (Boost REQUIRED COMPONENTS mpi serialization filesystem system chrono program_options python)
-    find_package(ALPSCore REQUIRED COMPONENTS hdf5 accumulators mc params python)
+    find_package (Boost REQUIRED COMPONENTS python)
+    include_directories(${Boost_INCLUDE_DIRS})
+    link_libraries(${Boost_LIBRARIES})
+    #find_package(ALPSCore REQUIRED COMPONENTS hdf5 accumulators mc params python)
     find_package (PythonLibs REQUIRED)
     include_directories(${PYTHON_INCLUDE_DIRS})
     message(STATUS "Python includes: " ${PYTHON_INCLUDE_DIRS})
@@ -108,23 +135,11 @@ if (BuildPython)
     set(BOLD_HYB_BUILD_PYTHON True)
 endif(BuildPython)
     
-    include_directories(${Boost_INCLUDE_DIRS})
-    link_libraries(${Boost_LIBRARIES})
-    include_directories(${ALPSCore_INCLUDE_DIRS})
-    link_libraries(${ALPSCore_LIBRARIES}) 
-
-# MPI
-find_package (MPI)
-    message(STATUS "MPI includes: " ${MPI_INCLUDE_DIRS} )
-    message(STATUS "MPI CXX libs: " ${MPI_CXX_LIBRARIES} )
-    message(STATUS "MPI definitions : " ${MPI_CXX_COMPILE_FLAGS} ${MPI_C_COMPILE_FLAGS})
-    add_definitions(${MPI_CXX_COMPILE_FLAGS}  ${MPI_C_COMPILE_FLAGS})
-	include_directories(${MPI_INCLUDE_DIRS})
-    link_libraries(${MPI_CXX_LIBRARIES})
 
 # fftw
 find_package (fftw REQUIRED)
     message(STATUS "FFTW includes: " ${FFTW_INCLUDE_DIR} )
+	include_directories(${FFTW_INCLUDE_DIR})
     link_libraries(${FFTW_LIBRARIES})
 
 ### add source/binary root of the project to included path

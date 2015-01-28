@@ -139,7 +139,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
         diffDF_stream.close();
 
         gd_=gd_new;
-        gd_.tail() = gd0_.tail(); // assume DMFT asymptotics are good 
+        gd_.set_tail(gd0_.tail()); // assume DMFT asymptotics are good 
         sigma_d_ = 0.0;
 
         for (auto iw : fgrid_.points()) { gd_sum[iw] = std::abs(gd_[iw].sum())/knorm; }; 
@@ -163,13 +163,114 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     gw_type delta_out(delta_); 
     delta_out = delta_ + 1.0/gw_ * gdloc / glatloc;
     // Assume DMFT asymptotics
-    delta_out.tail() = delta_.tail();
+    delta_out.set_tail(delta_.tail());
     //DEBUG("GD0 = " << GD0);
     //DEBUG("GD  = " << GD);
     //DEBUG("SigmaD = " << SigmaD);
     return delta_out;
 
 }
+
+template <typename LatticeT>
+typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::spin_susc(bmatsubara_grid::point W)
+{
+    disp_type susc_q_data(disp_.grids()); 
+/*
+    auto grids = std::tuple_cat(std::make_tuple(gridF),__repeater<KMesh,D>::get_tuple(_kGrid));
+    // Prepate interpolated Green's functions
+    GKType GD0_interp (grids), GD_interp(grids), GLat_interp(grids);
+    if (gridF._w_max != _fGrid._w_max || gridF._w_min != _fGrid._w_min) {
+        GD0_interp.copyInterpolate(GD0);
+        GD_interp.copyInterpolate(GD);
+        GLat_interp.copyInterpolate(GLat);
+        }
+    else { 
+        GD0_interp = GD0;
+        GD_interp = GD;
+        GLat_interp=GLat;
+        };
+        
+    auto mult = _S.beta*_S.U*_S.U*_S.w_0*_S.w_1;
+    GLocalType Lambda(gridF);
+    Lambda.copyInterpolate(_S.getLambda());
+
+        GridObject<ComplexType,FMatsubaraGrid,FMatsubaraGrid> magnetic_vertex(std::forward_as_tuple(gridF,gridF)); 
+        decltype(magnetic_vertex)::PointFunctionType VertexF2 = [&](FMatsubaraGrid::point w1, FMatsubaraGrid::point w2){return _S.getVertex4(0.0, w1,w2);};
+        auto U = _S.U;
+        typename GLocalType::FunctionType lambdaf = [mult,U](ComplexType w){return 1. - U*U/4./w/w;};
+        Lambda.fill(lambdaf);
+        VertexF2 = [&](FMatsubaraGrid::point w1, FMatsubaraGrid::point w2)->ComplexType{
+            return  mult*Lambda(w1)*Lambda(w2)*(2. + RealType(w1.index_ == w2.index_));
+        };
+        magnetic_vertex.fill(VertexF2);
+        auto StaticV4 = magnetic_vertex.getData().getAsMatrix();
+    */
+
+    gk_type Lwk = this->glat_dmft()/this->gd0()*(-1.0);
+    Lwk.set_tail(gftools::tools::fun_traits<typename gk_type::function_type>::constant(-1.0));
+    auto GDL = this->gd()*Lwk;
+
+/*
+    // Prepare output
+    size_t nqpts = qpts.size();
+    std::vector<ComplexType> out;
+    out.reserve(nqpts);
+
+    GKType dual_bubbles = Diagrams::getStaticBubbles(GD_interp); 
+    GKType gdl_bubbles = Diagrams::getStaticBubbles(GDL); 
+    GKType lattice_bubbles = Diagrams::getStaticBubbles(GLat_interp); 
+    
+    GLocalType dual_bubble(gridF), GDL_bubble(gridF), LatticeBubble(gridF);
+    for (auto q : qpts) {
+
+        ComplexType susc=0.0;
+        INFO_NONEWLINE("Evaluation of static susceptibility for q=["); for (int i=0; i<D; ++i) INFO_NONEWLINE(RealType(q[i])<<" "); INFO("]");
+
+        GDL_bubble.fill([&](typename FMatsubaraGrid::point w){return gdl_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
+        dual_bubble.fill([&](typename FMatsubaraGrid::point w){return dual_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
+        LatticeBubble.fill([&](typename FMatsubaraGrid::point w){return lattice_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
+
+        auto GDL_bubble_vector = GDL_bubble.getData().getAsVector();
+
+        auto dual_bubble_matrix = dual_bubble.getData().getAsDiagonalMatrix();
+
+        #ifdef bs_matrix
+        auto size = StaticV4.rows();
+        auto V4Chi = MatrixType<ComplexType>::Identity(size,size) - StaticV4*dual_bubble_matrix;
+        auto D1 = V4Chi.determinant();
+        if (std::imag(D1)<1e-7 && std::real(D1)>0) { 
+            auto full_magnetic_v = Diagrams::BS(dual_bubble_matrix, StaticV4, true, false);
+            susc = (GDL_bubble_vector.transpose()*full_magnetic_v*GDL_bubble_vector)(0,0)*0.5;
+            }
+        else susc = -1.;
+
+        #else
+        auto m1 = mult*dual_bubble*Lambda*Lambda;
+        ComplexType B_=2.0*(m1/(1.0-m1)).getData().sum();
+        if (std::imag(B_)>1e-5) throw (exRuntimeError("B is imaginary."));
+        RealType B = std::real(B_);
+        INFO("\t\tB = "<<B);
+        GLocalType C=m1*Lambda/(1.0-m1);
+        GLocalType ksi = (B*Lambda + C)/(1.-B);
+    
+        for (auto w1 : gridF.getPoints()) {
+            auto F = mult/(1.0-m1(w1))*Lambda(w1)/(1.0-B);
+            for (auto w2 : gridF.getPoints()) {
+                RealType kronecker = RealType(w1.index_ == w2.index_);
+                susc+=GDL_bubble(w1)*F*(2.*Lambda(w2)+Lambda(w1)*kronecker*(1.-B)+2.*C(w2))*GDL_bubble(w2)*0.5;
+            }
+        }
+        #endif
+
+        susc+=LatticeBubble.sum()*0.5;
+        INFO("Static susceptibility at q=" << q[0] << " = " << susc);
+        out.push_back(susc);
+        };
+*/
+
+    return susc_q_data;
+} 
+
 
 template class df_hubbard<cubic_traits<2>>;
 template class df_hubbard<cubic_traits<3>>;

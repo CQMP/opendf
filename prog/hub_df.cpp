@@ -1,5 +1,10 @@
+#include <opendf/config.hpp>
 #include <boost/program_options.hpp>
+
+#ifdef OPENDF_ENABLE_MPI
 #include <boost/mpi.hpp>
+#endif
+
 #include <chrono>
 #include <alps/params.hpp>
 
@@ -31,7 +36,10 @@ inline void print_section (const std::string& str)
 
 void run(alps::params p)
 {
+    #ifdef OPENDF_ENABLE_MPI
     boost::mpi::communicator comm;
+    #endif 
+
     print_section("DF ladder in " + std::to_string(D) + " dimensions.");
     // read input data
     std::string input_name = p["input"] | "qmc_output.h5";
@@ -94,7 +102,10 @@ void run(alps::params p)
     gw_type delta_upd = DF(p);
     end = steady_clock::now();
 
-    if (!comm.rank()) { 
+    #ifdef OPENDF_ENABLE_MPI
+    if (!comm.rank()) 
+    #endif
+        { 
 
         std::cout << "Calculation lasted : " 
             << duration_cast<hours>(end-start).count() << "h " 
@@ -119,7 +130,9 @@ void conflicting_options(const po::variables_map& vm, const char* opt1, const ch
 
 int main(int argc, char *argv[])
 {
+    #ifdef OPENDF_ENABLE_MPI
     boost::mpi::environment env(argc, argv);
+    #endif
 
     alps::params p = cmdline_params(argc, argv); 
     try { run(p); }

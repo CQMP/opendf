@@ -16,12 +16,16 @@ public:
     using typename base::disp_type;
     using base::NDim;
 
+    // constructor
     df_hubbard(gw_type gw, gw_type Delta, lattice_t lattice, kmesh kgrid, vertex_type d_vertex, vertex_type m_vertex):
         base(gw,Delta,lattice,kgrid),
         density_vertex_(d_vertex),
         magnetic_vertex_(m_vertex)
         {}
+    // run the df calculation and return the updated hybridization function
     virtual gw_type operator()(alps::params p);
+    // get spin susceptibility at fixed frequency
+    disp_type spin_susc(bmatsubara_grid::point W);
 
 protected:
     using base::fgrid_;
