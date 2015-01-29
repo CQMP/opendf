@@ -3,7 +3,7 @@
 #include <boost/math/special_functions.hpp>
 #include <Eigen/Core>
 #include <gftools.hpp> 
-#include <opendf/hdf5.hpp>
+#include <gftools/hdf5.hpp>
 
 // mpi
 #cmakedefine OPENDF_ENABLE_MPI

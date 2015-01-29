@@ -6,7 +6,7 @@
 #include <alps/params.hpp>
 #include <Eigen/Core>
 #include <gftools.hpp>
-#include "opendf/hdf5.hpp"
+#include <gftools/hdf5.hpp>
 
 namespace po = boost::program_options;
 using namespace gftools;
