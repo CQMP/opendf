@@ -6,7 +6,7 @@
 namespace open_df { 
 
 template <typename SCType>
-void save_data(SCType const& sc, alps::params p)
+void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::params p)
 {
     typedef typename SCType::gk_type gk_type;
     typedef typename SCType::gw_type gw_type;
@@ -31,6 +31,9 @@ void save_data(SCType const& sc, alps::params p)
 
     // save parameters
     ar[top + "/parameters"] << p;
+
+    // save updated hybridization function
+    save_grid_object(ar, top + "/delta_update", new_delta, plaintext > 0);
 
     // save dual quantities
     save_grid_object(ar, top + "/gd", sc.gd(), plaintext > 1);
@@ -60,7 +63,16 @@ void save_data(SCType const& sc, alps::params p)
     // save dmft self-energy for a consistency check
     save_grid_object(ar, top + "/sigma_dmft", sc.sigma_dmft(mu), plaintext > 0);
 
-
+/*
+    if (plaintext > 0) { 
+    sigma_w0 = 0;
+    disp_type glat0_w0 = 1./(w0 - sc.dispersion()); 
+    disp_type glat_w0(glat0_w0); 
+    glat_w0.data() = sc.glat()[w0];
+    sigma_w0 = 1./glat0_w0 - 1./glat_w0;
+    save_grid_object(ar, top + "/sigma_w0_dyson", sigma_w0, plaintext > 0);
+    }
+*/
 }
 
 } // end of namespace open_df

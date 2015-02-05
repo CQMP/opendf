@@ -19,6 +19,7 @@ public:
     typedef typename gftools::tools::ArgBackGenerator<NDim,kmesh,grid_object,complex_type>::type disp_type;
         
     df_base(gw_type gw, gw_type Delta, lattice_t lattice, kmesh kgrid);
+    void reload(gw_type gw, gw_type Delta);
             
     virtual gw_type operator()(alps::params p)=0;
     gk_type const& gd0() const { return this->gd0_;}
@@ -27,11 +28,14 @@ public:
     /// Bare lattice k-dependent GF
     gk_type glat_dmft() const;
     gw_type sigma_dmft(double mu = 0) const;
+    gw_type delta() const { return delta_; }
 
     gk_type glat() const { return this->glat_; }
     gk_type sigma_lat(double mu = 0) const;
     gk_type const& sigma_d() const { return this->sigma_d_; }
     gw_type glat_loc() const;
+
+    disp_type dispersion() const { return disp_; }
 
 protected: 
     /// Lattice to evaluate k-dependent integrals

@@ -64,8 +64,8 @@ void run(alps::params p)
     if (gw_arr[0].diff(gw_arr[1]) > 1e-8) 
         throw std::logic_error("Spin assymetry is not implemented.");
 
-    gw_type const& gw = gw_arr[0];
-    gw_type const& Delta = delta_arr[0]; 
+    gw_type gw = gw_arr[0];
+    gw_type Delta = delta_arr[0]; 
 
     vertex_type density_vertex = vertex_input[0] + vertex_input[1];
     vertex_type magnetic_vertex = vertex_input[0] - vertex_input[1];
@@ -99,7 +99,11 @@ void run(alps::params p)
     // run df
     steady_clock::time_point start, end;
     start = steady_clock::now();
-    gw_type delta_upd = DF(p);
+    for (int i = 0; i < 1; i++) { 
+        DF.reload(gw, Delta);
+        gw_type delta_upd = DF(p);
+        Delta = delta_upd;
+        }
     end = steady_clock::now();
 
     #ifdef OPENDF_ENABLE_MPI
@@ -115,7 +119,7 @@ void run(alps::params p)
             << std::endl;
         p["run_time"] = int(duration_cast<seconds>(end-start).count());
 
-        save_data(DF, p); 
+        save_data(DF, Delta, p); 
         }
 }
 

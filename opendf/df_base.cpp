@@ -18,6 +18,14 @@ df_base<LatticeT>::df_base(gw_type gw, gw_type Delta, lattice_t lattice, kmesh k
     glat_(gd0_.grids())
 {
     disp_.fill(lattice_.get_dispersion());
+    this->reload(gw, Delta);    
+}
+
+template <typename LatticeT>
+void df_base<LatticeT>::reload(gw_type gw, gw_type Delta)
+{
+    delta_ = Delta; 
+    gw_ = gw;
     glat_ = this->glat_dmft();
     for (auto w : fgrid_.points()) { gd0_[w] = glat_[w] - gw_[w]; }
     gd_ = gd0_; 
@@ -54,7 +62,7 @@ typename df_base<LatticeT>::gk_type df_base<LatticeT>::sigma_lat(double mu) cons
     double non_zero = !is_float_equal(sigma_d_.diff(sigma_lat), 0, 1e-12);
     gw_type sigma_dmft1 = this->sigma_dmft(mu);
     for (auto w : fgrid_.points()) { 
-        sigma_lat[w] = sigma_dmft1[w] + non_zero / ( 1.0 + sigma_d_[w] * gw_[w] ) * sigma_d_[w];
+        sigma_lat[w] = sigma_dmft1[w] + non_zero / ( sigma_d_[w] * gw_[w] + 1.0) * sigma_d_[w];
         }
     return sigma_lat;
 }
