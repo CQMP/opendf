@@ -29,14 +29,17 @@ def main(fname = "output.h5", verbosity = 2):
 
     potential_energy = (sigma_lat*glat).sum()/pow(len(kgrid),2)
     print "Tr[\Sigma * G] = ", potential_energy
-
     
 def read_hdf5(group):
     ''' read gridobject from hdf5 '''
-    data = group["data"]
+    data = np.array(group["data"])
     ngrids = len(group["grids"].keys())
+    # check if we have a compelx number dataset 
+    if len(data.shape) > ngrids and data.shape[ngrids] == 2:
+        data2 = data.view(complex)
+        data = data2.copy()
     grids = [np.array(group["grids"][str(i)]["values"][()]) for i in range(ngrids)]
-    return (grids, np.array(data))
+    return (grids, data)
 def find_nearest_index(array,value):
     idx = (abs(array-value)).argmin()
     return idx 
