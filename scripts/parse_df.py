@@ -27,8 +27,13 @@ def main(fname = "output.h5", verbosity = 2):
     # read self-energy
     (grids, sigma_lat) = read_hdf5(data["sigma_lat"])
 
-    potential_energy = (sigma_lat*glat).sum()/pow(len(kgrid),2)
+    potential_energy = (sigma_lat*glat).sum()/pow(len(kgrid),2)/beta
     print "Tr[\Sigma * G] = ", potential_energy
+
+    sigma_g = wgrid.copy() * 0.0j
+    for w in range(len(wgrid)):
+        sigma_g[w] = (sigma_lat[w,:]*glat[w,:]).sum()/pow(len(kgrid),2)/beta
+    np.savetxt("sigma_g.dat", np.vstack([wgrid,np.real(sigma_g)]).transpose())
     
 def read_hdf5(group):
     ''' read gridobject from hdf5 '''
