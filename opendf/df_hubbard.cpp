@@ -45,6 +45,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     gk_type full_vertex(gd0_.grids());
     matrix_type full_m(fgrid_.size(), fgrid_.size()), full_d(full_m), full_m2(full_m), full_d2(full_d);
 
+    // fill in initial eigenvalues of vertices
     
     double diff_gd = 1.0, diff_gd_min = diff_gd;
     int diff_gd_min_count = 0;
@@ -59,7 +60,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
             assert(is_float_equal(W.value(), W_val, 1e-4));
             std::cout << "W (bosonic) = " << W << std::endl;
             std::cout << "Calculating bubbles" << std::endl;
-            gk_type dual_bubbles = diagrams::calc_bubbles(gd_, W); 
+            gk_type dual_bubbles = diagram_traits::calc_bubbles(gd_, W); 
 
             d_v.data() = density_vertex_[W];
             m_v.data() = magnetic_vertex_[W];
@@ -270,7 +271,6 @@ typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::spin_susc(bmatsub
 
     return susc_q_data;
 } 
-
 
 template class df_hubbard<cubic_traits<2>>;
 template class df_hubbard<cubic_traits<3>>;

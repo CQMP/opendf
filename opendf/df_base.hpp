@@ -2,22 +2,23 @@
 #include <alps/params.hpp>
 
 #include <opendf/config.hpp>
+#include <opendf/diagrams.hpp>
 
 namespace open_df { 
-
+            
 template <typename LatticeT>
 class df_base { 
 public:
-    typedef LatticeT lattice_t;
-    typedef grid_object<std::complex<double>, bmatsubara_grid, fmatsubara_grid, fmatsubara_grid> vertex_type;
-    typedef grid_object<std::complex<double>, fmatsubara_grid, fmatsubara_grid> fvertex_type;
-    typedef grid_object<std::complex<double>, fmatsubara_grid> gw_type;
+    typedef diagrams::diagram_traits<LatticeT> diagram_traits;
+    typedef typename diagram_traits::lattice_t lattice_t;
+    typedef typename diagram_traits::vertex_type vertex_type;
+    typedef typename diagram_traits::fvertex_type fvertex_type;
+    typedef typename diagram_traits::gw_type gw_type;
+    static constexpr int NDim = diagram_traits::NDim; 
+    typedef typename diagram_traits::gk_type gk_type;
+    typedef typename diagram_traits::disp_type disp_type;
+    typedef typename diagram_traits::vertex_eval_type vertex_eval_type;
 
-    static constexpr int NDim = lattice_t::NDim; 
-
-    typedef typename gftools::tools::ArgBackGenerator<NDim,kmesh,grid_object,complex_type,fmatsubara_grid>::type gk_type;
-    typedef typename gftools::tools::ArgBackGenerator<NDim,kmesh,grid_object,complex_type>::type disp_type;
-        
     df_base(gw_type gw, gw_type Delta, lattice_t lattice, kmesh kgrid);
     void reload(gw_type gw, gw_type Delta);
             
