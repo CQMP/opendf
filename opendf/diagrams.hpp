@@ -25,9 +25,24 @@ struct diagram_traits {
     /// Calculate a bubble $-T \Sum_k G(i\omega, k) G(i\omega + W, k+q) (at bosonic freq = 0) for a given GF
     static gk_type calc_bubbles(gk_type const& gf, bmatsubara_grid::point W);
 
-    static vertex_eval_type get_max_eigenvalues(gk_type const& bubbles, vertex_type const& bare_vertex);
+    static vertex_eval_type get_max_eigenvalues(gk_type const& bubbles, vertex_type const& bare_vertex, lattice_t const& lattice, bmatsubara_grid::point W);
 };
 
+template <typename> class BS1;
+
+template <> class BS1<matrix_type> { 
+    
+    matrix_type forward_iter(size_t n_iter, real_type mix,  bool evaluate_only_order_n = false);
+    matrix_type backward_iter(size_t n_iter, real_type mix,  bool evaluate_only_order_n = false);
+    matrix_type forward_matrix();
+    matrix_type backward_matrix();
+
+    matrix_type solve(bool forward, bool eval_SC);
+    
+    BS1(matrix_type const& bubble, matrix_type const& vertex);
+    matrix_type const& bubble_;
+    matrix_type const& vertex_;
+};
 
 /// Evaluate Bethe-Salpeter matrix equation
 matrix_type BS(const matrix_type &Chi0, const matrix_type &IrrVertex4, bool forward, bool eval_SC, size_t n_iter, real_type mix,  bool evaluate_only_order_n = false);
@@ -69,10 +84,13 @@ typename diagram_traits<LatticeT>::gk_type diagram_traits<LatticeT>::calc_bubble
     return out / (-fgrid.beta());
 } 
 
+std::complex<double> max_eval(const matrix_type &Chi0, const matrix_type &IrrVertex4); 
 
 template <typename LatticeT>
-typename diagram_traits<LatticeT>::vertex_eval_type diagram_traits<LatticeT>::get_max_eigenvalues(gk_type const& bubbles, vertex_type const& bare_vertex)
+typename diagram_traits<LatticeT>::vertex_eval_type diagram_traits<LatticeT>::get_max_eigenvalues(gk_type const& bubbles, vertex_type const& vertex, lattice_t const& lattice, bmatsubara_grid::point W)
 {
+    const matrix_type fvertex = vertex[W].as_matrix(); 
+    
 }
 
 } // end of namespace diagrams

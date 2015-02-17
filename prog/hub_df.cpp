@@ -3,6 +3,9 @@
 
 #ifdef OPENDF_ENABLE_MPI
 #include <boost/mpi.hpp>
+#define mpi_cout if (!comm.rank()) std::cout
+#else
+#define mpi_cout std::cout
 #endif
 
 #include <chrono>
@@ -44,7 +47,7 @@ void run(alps::params p)
     // read input data
     std::string input_name = p["input"] | "qmc_output.h5";
     std::string top = p["inp_section"] | "";
-    std::cout << "Reading data from " << input_name << " /" << top << std::endl;
+    mpi_cout << "Reading data from " << input_name << " /" << top << std::endl;
 
     alps::hdf5::archive ar(input_name, "r");
 
@@ -81,9 +84,9 @@ void run(alps::params p)
     p["beta"] = beta;
 
     print_section("parameters");
-    std::cout << p << std::flush;
-    std::cout << "temperature = " << T << std::endl;
-    std::cout << std::endl;
+    mpi_cout << p << std::flush;
+    mpi_cout << "temperature = " << T << std::endl;
+    mpi_cout << std::endl;
 
     // create a grid over Brilloin zone for evaluation 
     kmesh kgrid(kpts);
@@ -99,7 +102,7 @@ void run(alps::params p)
 
     // check if a resume is requested and try to resume 
     if (p["resume"].cast<bool>()) { 
-        std::cout << "Trying to resume" << std::endl;
+        mpi_cout << "Trying to resume" << std::endl;
         std::string output_file = p["output"] | "output.h5";
         bool resume = boost::filesystem::exists(output_file);
         if (!resume) { ERROR("Can't resume - no file " << output_file); }
@@ -129,7 +132,7 @@ void run(alps::params p)
     #endif
         { 
 
-        std::cout << "Calculation lasted : " 
+        mpi_cout << "Calculation lasted : " 
             << duration_cast<hours>(end-start).count() << "h " 
             << duration_cast<minutes>(end-start).count()%60 << "m " 
             << duration_cast<seconds>(end-start).count()%60 << "s " 
@@ -158,7 +161,8 @@ int main(int argc, char *argv[])
 
     try { 
         alps::params p = cmdline_params(argc, argv); 
-        run(p); }
+        run(p); 
+        }
     catch (std::exception &e) { std::cerr << e.what() << std::endl; exit(1); };
     
 }
@@ -185,7 +189,7 @@ alps::params cmdline_params(int argc, char* argv[])
         ("kpts",                    po::value<int>()->default_value(16), "number of points on a single axis in Brilloin zone")
         ("df_sc_iter",       po::value<int>()->default_value(1000), "maximum df iterations")
         ("nbosonic",           po::value<int>()->default_value(10),  "amount of bosonic freqs to use (reduced also by the amount of freqs in the vertex")
-        ("n_bs_iter",               po::value<int>()->default_value(100), "amount of self-consistent iterations in BS (with eval_bs_sc = 1)")
+        ("n_bs_iter",               po::value<int>()->default_value(1), "amount of self-consistent iterations in BS (with eval_bs_sc = 1)")
         ("plaintext,p",      po::value<int>()->default_value(1), "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)");
     string_opts.add_options()
         ("input",           po::value<std::string>()->default_value("output.h5"), "input file with vertices and gf")
