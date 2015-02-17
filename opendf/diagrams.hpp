@@ -24,6 +24,8 @@ struct diagram_traits {
     static gk_type calc_static_bubbles(gk_type const& gf);
     /// Calculate a bubble $-T \Sum_k G(i\omega, k) G(i\omega + W, k+q) (at bosonic freq = 0) for a given GF
     static gk_type calc_bubbles(gk_type const& gf, bmatsubara_grid::point W);
+
+    static vertex_eval_type get_max_eigenvalues(gk_type const& bubbles, vertex_type const& bare_vertex);
 };
 
 
@@ -32,7 +34,7 @@ matrix_type BS(const matrix_type &Chi0, const matrix_type &IrrVertex4, bool forw
 
 // implementation
 template <typename LatticeT>
-typename diagram_traits<LatticeT>::gk_type diagram_traits<LatticeT>::calc_static_bubbles(typename diagram_traits<LatticeT>::gk_type const& GF)
+typename diagram_traits<LatticeT>::gk_type diagram_traits<LatticeT>::calc_static_bubbles(gk_type const& GF)
 {
     typename diagram_traits<LatticeT>::gk_type out(GF.grids());
     const auto& fgrid = std::get<0>(GF.grids());
@@ -45,7 +47,7 @@ typename diagram_traits<LatticeT>::gk_type diagram_traits<LatticeT>::calc_static
 }
 
 template <typename LatticeT>
-typename diagram_traits<LatticeT>::gk_type diagram_traits<LatticeT>::calc_bubbles(typename diagram_traits<LatticeT>::gk_type const& GF, bmatsubara_grid::point W)
+typename diagram_traits<LatticeT>::gk_type diagram_traits<LatticeT>::calc_bubbles(gk_type const& GF, bmatsubara_grid::point W)
 {
     if (is_float_equal(W.value(), 0)) return diagram_traits<LatticeT>::calc_static_bubbles(GF); 
     typename diagram_traits<LatticeT>::gk_type GF_shift(GF.grids());
@@ -67,6 +69,11 @@ typename diagram_traits<LatticeT>::gk_type diagram_traits<LatticeT>::calc_bubble
     return out / (-fgrid.beta());
 } 
 
+
+template <typename LatticeT>
+typename diagram_traits<LatticeT>::vertex_eval_type diagram_traits<LatticeT>::get_max_eigenvalues(gk_type const& bubbles, vertex_type const& bare_vertex)
+{
+}
 
 } // end of namespace diagrams
 } // end of namespace open_df

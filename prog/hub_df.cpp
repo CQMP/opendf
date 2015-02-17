@@ -96,11 +96,29 @@ void run(alps::params p)
         
     // construct a df run 
     df_hubbard<cubic_traits<2>> DF(gw, Delta, lattice, kgrid, density_vertex, magnetic_vertex);
+
+    // check if a resume is requested and try to resume 
+    if (p["resume"].cast<bool>()) { 
+        std::cout << "Trying to resume" << std::endl;
+        std::string output_file = p["output"] | "output.h5";
+        bool resume = boost::filesystem::exists(output_file);
+        if (!resume) { ERROR("Can't resume - no file " << output_file); }
+        else { 
+            std::string top = "/df";
+            alps::hdf5::archive ar(output_file, "r");
+            resume = ar.is_group(top + "/gd");
+            if (!resume) { ERROR("Can't resume - no gd found in" << output_file << top << "/gd"); } 
+            else { 
+                gk_type gd_initial = load_grid_object<gk_type>(ar, top + "/gd"); 
+                DF.set_gd(std::move(gd_initial));
+                }
+            }
+        }
     // run df
     steady_clock::time_point start, end;
     start = steady_clock::now();
     for (int i = 0; i < 1; i++) { 
-        DF.reload(gw, Delta);
+        DF.reload(gw, Delta, false);
         gw_type delta_upd = DF(p);
         Delta = delta_upd;
         }
@@ -138,8 +156,9 @@ int main(int argc, char *argv[])
     boost::mpi::environment env(argc, argv);
     #endif
 
-    alps::params p = cmdline_params(argc, argv); 
-    try { run(p); }
+    try { 
+        alps::params p = cmdline_params(argc, argv); 
+        run(p); }
     catch (std::exception &e) { std::cerr << e.what() << std::endl; exit(1); };
     
 }
@@ -173,7 +192,7 @@ alps::params cmdline_params(int argc, char* argv[])
         ("inp_section",     po::value<std::string>()->default_value("dmft"), "input section (default : 'dmft')")
         ("output",          po::value<std::string>()->default_value("output.h5"), "output file");
     bool_opts.add_options()
-        ("resume", po::value<bool>()->default_value(1), "try resuming calculation")
+        ("resume", po::value<bool>()->default_value(0), "try resuming calculation - load dual gf from 'output' hdf5 file : /df/gd section")
         ("update_df_mixing", po::value<bool>()->default_value(1), "update mixing of dual gf for better accuracy")
         ("eval_bs_sc", po::value<bool>()->default_value(0), "evaluate Bethe-Salpeter equation self-consistently");
 

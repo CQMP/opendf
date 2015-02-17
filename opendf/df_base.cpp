@@ -18,17 +18,24 @@ df_base<LatticeT>::df_base(gw_type gw, gw_type Delta, lattice_t lattice, kmesh k
     glat_(gd0_.grids())
 {
     disp_.fill(lattice_.get_dispersion());
-    this->reload(gw, Delta);    
+    this->reload(gw, Delta, true);    
 }
 
 template <typename LatticeT>
-void df_base<LatticeT>::reload(gw_type gw, gw_type Delta)
+void df_base<LatticeT>::set_gd(gk_type&& gd_initial)
+{
+    if (fgrid_ != gd_initial.template grid<0>()) { ERROR("matsubara grid mismatch when constucting df"); throw (std::logic_error("Grid mismatch")); };
+    this->gd_ = gd_initial;
+}
+
+template <typename LatticeT>
+void df_base<LatticeT>::reload(gw_type gw, gw_type Delta, bool flush_gd)
 {
     delta_ = Delta; 
     gw_ = gw;
     glat_ = this->glat_dmft();
     for (auto w : fgrid_.points()) { gd0_[w] = glat_[w] - gw_[w]; }
-    gd_ = gd0_; 
+    if (flush_gd) gd_ = gd0_; 
     sigma_d_ = 0.0;
 }
     

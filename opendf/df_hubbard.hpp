@@ -3,6 +3,7 @@
 
 namespace open_df { 
 
+/// Dual fermion evaluation of a spin-symmetric Hubbard model without spatial symmetry breaking
 template <typename LatticeT> 
 class df_hubbard : public df_base<LatticeT>
 {
@@ -18,7 +19,7 @@ public:
     using base::NDim;
     using typename base::vertex_eval_type;
 
-    // constructor
+    /// Constructor
     df_hubbard(gw_type gw, gw_type Delta, lattice_t lattice, kmesh kgrid, vertex_type d_vertex, vertex_type m_vertex):
         base(gw,Delta,lattice,kgrid),
         density_vertex_(d_vertex),
@@ -26,9 +27,9 @@ public:
         d_evals_(std::tuple_cat(std::forward_as_tuple(this->magnetic_vertex_.grid()), this->disp_.grids())),
         m_evals_(d_evals_.grids()) 
         {}
-    // run the df calculation and return the updated hybridization function
+    /// Run the df calculation and return the updated hybridization function
     virtual gw_type operator()(alps::params p);
-    // get spin susceptibility at fixed frequency
+    /// Get spin susceptibility at fixed frequency
     disp_type spin_susc(bmatsubara_grid::point W);
 
 protected:
@@ -41,9 +42,13 @@ protected:
     using base::gw_;
     using base::delta_;
     using base::glat_;
+    /// An impurity vertex in the density channel
     vertex_type density_vertex_;
+    /// An impurity vertex in the magnetic channel
     vertex_type magnetic_vertex_;
+    /// Largest eigenvalue of density vertex at different W,Q
     vertex_eval_type d_evals_;
+    /// Largest eigenvalue of magnetic vertex at different W,Q
     vertex_eval_type m_evals_;
 };
 
