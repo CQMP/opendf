@@ -241,7 +241,12 @@ typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::spin_susc(bmatsub
             }
         else susc = -1.;
 
-        for (auto q1 : other_qpts) susc_q_data(q1) = susc; 
+        for (auto q1 : other_qpts){
+            // this is an intel compiler bugfix. Intel can't convert std::array to std::tuple, so we do that by extracting indices and then finding the corresponding tuple
+            std::array<size_t, NDim> indices; for (int i = 0; i<NDim; i++) indices[i]=q1[i].index();
+            typename disp_type::point_tuple q2 = gftools::tools::grid_tuple_traits<typename disp_type::grid_tuple>::points(indices, susc_q_data.grids());
+            susc_q_data(q2) = susc;                                               
+            }
         };
 
     return susc_q_data;
