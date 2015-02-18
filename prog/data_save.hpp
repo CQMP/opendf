@@ -73,10 +73,14 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
     if (save_susc) { 
         auto spin_susc = sc.spin_susc(W0);
         save_grid_object(ar, top + "/spin_susc_W" + std::to_string(W0.value().imag())+"_k", spin_susc, plaintext > 0); 
+        auto charge_susc = sc.charge_susc(W0);
+        save_grid_object(ar, top + "/charge_susc_W" + std::to_string(W0.value().imag())+"_k", charge_susc, plaintext > 0); 
 
-        susc_r_type spin_susc_r(gftools::tuple_tools::repeater<enum_grid, SCType::NDim>::get_tuple(rgrid));
-        spin_susc_r.data() = run_fft(spin_susc.data(), FFTW_BACKWARD);
-        save_grid_object(ar, top + "/spin_susc_W" + std::to_string(W0.value().imag())+"_r", spin_susc_r, plaintext > 0); 
+        susc_r_type susc_r(gftools::tuple_tools::repeater<enum_grid, SCType::NDim>::get_tuple(rgrid));
+        susc_r.data() = run_fft(spin_susc.data(), FFTW_BACKWARD);
+        save_grid_object(ar, top + "/spin_susc_W" + std::to_string(W0.value().imag())+"_r", susc_r, plaintext > 0); 
+        susc_r.data() = run_fft(charge_susc.data(), FFTW_BACKWARD);
+        save_grid_object(ar, top + "/charge_susc_W" + std::to_string(W0.value().imag())+"_r", susc_r, plaintext > 0); 
     }
 
 /*

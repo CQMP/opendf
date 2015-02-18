@@ -186,7 +186,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
 }
 
 template <typename LatticeT>
-typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::spin_susc(bmatsubara_grid::point W) const
+typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::get_susc_(vertex_type const& vertex, bmatsubara_grid::point W, double norm) const
 {
     disp_type susc_q_data(disp_.grids()); 
 
@@ -194,7 +194,7 @@ typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::spin_susc(bmatsub
     Lwk.set_tail(gftools::tools::fun_traits<typename gk_type::function_type>::constant(-1.0));
     auto GDL = this->gd()*Lwk;
 
-    const matrix_type magnetic_v_matrix = this->magnetic_vertex_[W].as_matrix(); 
+    const matrix_type v_matrix = vertex[W].as_matrix(); 
 
     gk_type dual_bubbles = diagram_traits::calc_bubbles(gd_, W); 
     gk_type gdl_bubbles = diagram_traits::calc_bubbles(GDL, W); 
@@ -224,19 +224,19 @@ typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::spin_susc(bmatsub
         //DEBUG("gdl \n" << gdl_bubble_vector);
         matrix_type dual_bubble_matrix = dual_bubble.data().as_diagonal_matrix(); 
         //DEBUG(" db \n" << dual_bubble_matrix);
-        //DEBUG("m_v \n" << magnetic_v_matrix);
+        //DEBUG("m_v \n" << v_matrix);
 
-        forward_bs magnetic_bs(dual_bubble_matrix, magnetic_v_matrix, 0);
-        //matrix_type full_m = magnetic_bs.solve_inversion();
-        matrix_type full_m = magnetic_bs.solve_inversion();
+        forward_bs bs(dual_bubble_matrix, v_matrix, 0);
+        //matrix_type full_m = bs.solve_inversion();
+        matrix_type full_m = bs.solve_inversion();
         //DEBUG("full m : \n" << full_m);
-        double m_det = magnetic_bs.determinant().real();
+        double m_det = bs.determinant().real();
 
         if (std::imag(m_det)<1e-7 && std::real(m_det)>0) { 
-            susc = (gdl_bubble_vector.transpose()*full_m*gdl_bubble_vector)(0,0)*0.5;
+            susc = (gdl_bubble_vector.transpose()*full_m*gdl_bubble_vector)(0,0)*norm;
             //DEBUG(gftools::tuple_tools::print_array(q));
             //DEBUG(susc);
-            susc+=lattice_bubble.sum()*0.5;
+            susc+=lattice_bubble.sum()*norm;
             //DEBUG(lattice_bubble.sum());
             }
         else susc = -1.;
