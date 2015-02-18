@@ -44,6 +44,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     gw_type dual_bubble(fgrid_);
     gk_type full_vertex(gd0_.grids());
     matrix_type full_m(fgrid_.size(), fgrid_.size()), full_d(full_m), full_m2(full_m), full_d2(full_d);
+    double min_det = 1;
 
     // fill in initial eigenvalues of vertices
     
@@ -68,6 +69,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
             const matrix_type density_v_matrix = d_v.data().as_matrix(); 
             const matrix_type magnetic_v_matrix = m_v.data().as_matrix(); 
 
+            min_det = 1;
             // loop through bz
             size_t nq = 1;
             for (auto pts_it = unique_kpts.begin(); pts_it != unique_kpts.end(); pts_it++) { 
@@ -79,20 +81,29 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
 
                 // define arguments conserved on the ladder
                 typename gk_type::arg_tuple Wq_args = std::tuple_cat(std::make_tuple(W),q);
-                std::cout << tuple_tools::print_tuple(Wq_args) << "]. Weight : " << q_weight << ". " << std::endl;
+                std::cout << tuple_tools::print_tuple(Wq_args) << "]. Weight : " << q_weight << ". " << std::flush;
                 // get dual bubble
                 dual_bubble.fill([&](typename fmatsubara_grid::point w){return dual_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
 
                 matrix_type dual_bubble_matrix = dual_bubble.data().as_diagonal_matrix(); 
 
-                std::cout << "\tMagnetic channel : " << std::flush;
-                full_m = diagrams::BS(dual_bubble_matrix, magnetic_v_matrix, true, false, n_bs_iter, bs_mix);
-                std::cout << "\tDensity channel  : " << std::flush;
-                full_d = diagrams::BS(dual_bubble_matrix, density_v_matrix, true, false, n_bs_iter, bs_mix);
+                std::cout << "\tMagnetic " << std::flush;
+                //full_m = diagrams::BS(dual_bubble_matrix, magnetic_v_matrix, true, false, n_bs_iter, bs_mix);
+                forward_bs magnetic_bs(dual_bubble_matrix, magnetic_v_matrix, 0);
+                full_m = magnetic_bs.solve(false, n_bs_iter, bs_mix);
+                double m_det = magnetic_bs.determinant().real();
+                std::cout << "det = " << m_det;
+                min_det = std::min(min_det, m_det); 
+                std::cout << "\tDensity " << std::flush;
+                forward_bs density_bs(dual_bubble_matrix, density_v_matrix, 0);
+                full_d = density_bs.solve(false, n_bs_iter, bs_mix);
+                double d_det = density_bs.determinant().real();
+                std::cout << "det = " << d_det;
+                min_det = std::min(min_det, d_det); 
 
                 // optimize me!
-                full_m2 = diagrams::BS(dual_bubble_matrix, magnetic_v_matrix, true, true, 1, 1.0, true); // second order correction
-                full_d2 = diagrams::BS(dual_bubble_matrix, density_v_matrix, true, true, 1, 1.0, true); // second order correction
+                full_m2 = magnetic_bs.solve_iterations(1, 1.0, true); // second order correction
+                full_d2 = density_bs.solve_iterations(1, 1.0, true); // second order correction
 
                 for (typename fmatsubara_grid::point iw1 : fgrid_.points())  {
                     int iwn = iw1.index();
@@ -104,6 +115,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                         full_vertex.get(std::tuple_cat(std::make_tuple(iw1),q_pt)) = 0.5*(3.0*(magnetic_val)+density_val);
                         };
                     };
+                std::cout << std::endl;
                 } // end bz loop
 
             std::cout << "Updating sigma" << std::endl;
@@ -136,7 +148,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
             }
 
         diffDF_stream.open("diffDF.dat",std::ios::app);
-        diffDF_stream << diff_gd << "  " << df_sc_mix << std::endl;
+        diffDF_stream << diff_gd << "  " << df_sc_mix << " " << min_det << std::endl;
         diffDF_stream.close();
 
         gd_=gd_new;

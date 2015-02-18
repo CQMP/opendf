@@ -28,24 +28,27 @@ struct diagram_traits {
     static vertex_eval_type get_max_eigenvalues(gk_type const& bubbles, vertex_type const& bare_vertex, lattice_t const& lattice, bmatsubara_grid::point W);
 };
 
-template <typename> class BS1;
 
-template <> class BS1<matrix_type> { 
-    
-    matrix_type forward_iter(size_t n_iter, real_type mix,  bool evaluate_only_order_n = false);
-    matrix_type backward_iter(size_t n_iter, real_type mix,  bool evaluate_only_order_n = false);
-    matrix_type forward_matrix();
-    matrix_type backward_matrix();
+template <typename, bool> class BetheSalpeter;
+template <bool Forward> class BetheSalpeter<matrix_type, Forward> { 
+public:
+    constexpr static bool fwd = Forward;
+    matrix_type solve_iterations(size_t n_iter, real_type mix,  bool evaluate_only_order_n);
+    matrix_type solve_inversion();
 
-    matrix_type solve(bool forward, bool eval_SC);
+    matrix_type solve(bool eval_iterations, size_t n_iter = 1, real_type mix= 1.0, bool evaluate_only_order_n = false);
     
-    BS1(matrix_type const& bubble, matrix_type const& vertex);
+    BetheSalpeter(matrix_type const& bubble, matrix_type const& vertex, unsigned int verbosity = 0) : bubble_(bubble), vertex_(vertex), verbosity_(verbosity) {}
+    std::complex<double> determinant() const { return det_; }
+protected:
     matrix_type const& bubble_;
     matrix_type const& vertex_;
+    typename matrix_type::Scalar det_ = 1.0;
+    unsigned int verbosity_;
 };
 
 /// Evaluate Bethe-Salpeter matrix equation
-matrix_type BS(const matrix_type &Chi0, const matrix_type &IrrVertex4, bool forward, bool eval_SC, size_t n_iter, real_type mix,  bool evaluate_only_order_n = false);
+//matrix_type BS(const matrix_type &Chi0, const matrix_type &IrrVertex4, bool forward, bool eval_SC, size_t n_iter, real_type mix,  bool evaluate_only_order_n = false);
 
 // implementation
 template <typename LatticeT>

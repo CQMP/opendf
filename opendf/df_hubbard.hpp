@@ -18,6 +18,7 @@ public:
     using typename base::disp_type;
     using base::NDim;
     using typename base::vertex_eval_type;
+    typedef diagrams::BetheSalpeter<matrix_type, true> forward_bs;
 
     /// Constructor
     df_hubbard(gw_type gw, gw_type Delta, lattice_t lattice, kmesh kgrid, vertex_type d_vertex, vertex_type m_vertex):
