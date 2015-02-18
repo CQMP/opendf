@@ -67,10 +67,16 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
     // susceptibilitiles
     bool save_susc = p["save_susc"] | true;
     bmatsubara_grid::point W0 = bgrid.find_nearest(0.0);
+
+    enum_grid rgrid(0, kgrid.size(), false); // a grid in real space
+    typedef grid_object<std::complex<double>, enum_grid, enum_grid> susc_r_type;
     if (save_susc) { 
         auto spin_susc = sc.spin_susc(W0);
-        save_grid_object(ar, top + "/spin_susc_W" + std::to_string(W0.value().imag()), spin_susc, plaintext > 0); 
+        save_grid_object(ar, top + "/spin_susc_W" + std::to_string(W0.value().imag())+"_k", spin_susc, plaintext > 0); 
 
+        susc_r_type spin_susc_r(gftools::tuple_tools::repeater<enum_grid, SCType::NDim>::get_tuple(rgrid));
+        spin_susc_r.data() = run_fft(spin_susc.data(), FFTW_BACKWARD);
+        save_grid_object(ar, top + "/spin_susc_W" + std::to_string(W0.value().imag())+"_r", spin_susc_r, plaintext > 0); 
     }
 
 /*
