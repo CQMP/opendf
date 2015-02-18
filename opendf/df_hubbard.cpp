@@ -9,15 +9,15 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
 {
     std::cout << "Starting ladder dual fermion calculations" << std::endl;
 
-    int n_bs_iter = p["n_bs_iter"] | 100;
-    double bs_mix = p["bs_mix"] | 1.0;
-    double df_sc_cutoff = p["df_sc_cutoff"] | 1e-7;
-    double df_sc_mix = p["df_sc_mix"] | 1.0;
-    bool update_df_sc_mixing = p["update_df_mixing"] | true;
-    int df_sc_iter = p["df_sc_iter"] | 1000;
-    int nbosonic_ = std::min(int(p["nbosonic"] | 1), magnetic_vertex_.grid().max_n() + 1);
-    #ifndef NDEBUG
-    int verbosity = p["verbosity"] | 0; // relevant only in debug mode
+    int n_bs_iter = p["n_bs_iter"] | 100;   // number of Bethe Salpeter iterations, if iterative evaluation is requested (also used, when the ladder can't be converged)
+    double bs_mix = p["bs_mix"] | 1.0;      // mixing between subsequent Bethe-Salpeter iterations 
+    double df_sc_cutoff = p["df_sc_cutoff"] | 1e-7; // cutoff for determining convergence of dual Green's function
+    double df_sc_mix = p["df_sc_mix"] | 1.0;    // mixing between DF iterations
+    bool update_df_sc_mixing = p["update_df_mixing"] | true; // reduce mixing of DF iterations, if convergence is not achieved 
+    int df_sc_iter = p["df_sc_iter"] | 1000; // maximum number of DF iterations
+    int nbosonic_ = std::min(int(p["nbosonic"] | 1), magnetic_vertex_.grid().max_n() + 1); // amount of bosonic frequencies to use
+    #ifndef NDEBUG 
+    int verbosity = p["verbosity"] | 0; // degugging verbosity - relevant only in debug build mode
     #endif
 
     int kpts = kgrid_.size();
@@ -35,10 +35,6 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     for (auto iw : fgrid_.points()) { gd_sum[iw] = std::abs(gd_[iw].sum())/totalkpts; }; 
     std::cout << "Beginning with GD sum = " << std::abs(gd_sum.sum())/double(fgrid_.size()) << std::endl;
     
-    // stream convergence
-    std::ofstream diffDF_stream("diffDF.dat",std::ios::out);
-    diffDF_stream.close();
-
     // prepare caches        
     fvertex_type m_v(fgrid_, fgrid_), d_v(m_v);
     gw_type dual_bubble(fgrid_);
@@ -46,8 +42,9 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     matrix_type full_m(fgrid_.size(), fgrid_.size()), full_d(full_m), full_m2(full_m), full_d2(full_d);
     double min_det = 1;
 
-    // fill in initial eigenvalues of vertices
-    
+    // stream convergence
+    std::ofstream diffDF_stream("diffDF.dat",std::ios::out);
+    diffDF_stream.close();
     double diff_gd = 1.0, diff_gd_min = diff_gd;
     int diff_gd_min_count = 0;
 
@@ -55,6 +52,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
         sigma_d_ = 0.0;
         std::cout << std::endl << "DF iteration " << nd_iter << std::endl;
 
+        // loop through conserved bosonic frequencies
         for (int Windex = -nbosonic_ + 1; Windex < nbosonic_; Windex++) { 
             std::complex<double> W_val = BMatsubara(Windex, beta);
             typename bmatsubara_grid::point W = bgrid.find_nearest(W_val); 
@@ -70,12 +68,12 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
             const matrix_type magnetic_v_matrix = m_v.data().as_matrix(); 
 
             min_det = 1;
-            // loop through bz
+            // loop through the Brilloin zone. We do it by looping through the irreducible wedge and assigning the correspondent weight to each point
             size_t nq = 1;
             for (auto pts_it = unique_kpts.begin(); pts_it != unique_kpts.end(); pts_it++) { 
                 std::array<kmesh::point, NDim> q = pts_it->first; // point
                 real_type q_weight = real_type(pts_it->second.size()); // it's weight
-                auto other_pts = pts_it -> second; // other points, equivalent by symmetry
+                auto other_qpts = pts_it -> second; // other points, equivalent by symmetry
                 std::cout << nq++ << "/" << unique_kpts.size() << ": [" << std::flush;
                 //for (size_t i=0; i<D; ++i) std::cout << real_type(q[i]) << " " << std::flush; std::cout << "]. Weight : " << q_weight << ". " << std::endl;
 
@@ -87,13 +85,16 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
 
                 matrix_type dual_bubble_matrix = dual_bubble.data().as_diagonal_matrix(); 
 
+                // Calculate ladders in different channels and get a determinant of 1 - vertex * bubble. 
+                // If it's negative - one eigenvalue is negative, i.e. the ladder can't be evaluated.
+                // magnetic channel
                 std::cout << "\tMagnetic " << std::flush;
-                //full_m = diagrams::BS(dual_bubble_matrix, magnetic_v_matrix, true, false, n_bs_iter, bs_mix);
                 forward_bs magnetic_bs(dual_bubble_matrix, magnetic_v_matrix, 0);
                 full_m = magnetic_bs.solve(false, n_bs_iter, bs_mix);
                 double m_det = magnetic_bs.determinant().real();
                 std::cout << "det = " << m_det;
                 min_det = std::min(min_det, m_det); 
+                // density channel
                 std::cout << "\tDensity " << std::flush;
                 forward_bs density_bs(dual_bubble_matrix, density_v_matrix, 0);
                 full_d = density_bs.solve(false, n_bs_iter, bs_mix);
@@ -101,9 +102,9 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 std::cout << "det = " << d_det;
                 min_det = std::min(min_det, d_det); 
 
-                // optimize me!
-                full_m2 = magnetic_bs.solve_iterations(1, 1.0, true); // second order correction
-                full_d2 = density_bs.solve_iterations(1, 1.0, true); // second order correction
+                // second order correction
+                full_m2 = magnetic_bs.solve_iterations(1, 1.0, true);
+                full_d2 = density_bs.solve_iterations(1, 1.0, true); 
 
                 for (typename fmatsubara_grid::point iw1 : fgrid_.points())  {
                     int iwn = iw1.index();
@@ -111,7 +112,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                     std::complex<double> density_val  = full_d(iwn, iwn) - 0.5*full_d2(iwn, iwn); 
                     DEBUG("magnetic : " <<  full_m(iwn, iwn) << " " << 0.5*full_m2(iwn, iwn) << " --> " << magnetic_val, verbosity, 2);
                     DEBUG("density  : " <<  full_d(iwn, iwn) << " " << 0.5*full_d2(iwn, iwn) << " --> " << density_val, verbosity, 2);
-                    for (auto q_pt : other_pts) { 
+                    for (auto q_pt : other_qpts) { 
                         full_vertex.get(std::tuple_cat(std::make_tuple(iw1),q_pt)) = 0.5*(3.0*(magnetic_val)+density_val);
                         };
                     };
@@ -185,101 +186,63 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
 }
 
 template <typename LatticeT>
-typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::spin_susc(bmatsubara_grid::point W)
+typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::spin_susc(bmatsubara_grid::point W) const
 {
     disp_type susc_q_data(disp_.grids()); 
-/*
-    auto grids = std::tuple_cat(std::make_tuple(gridF),__repeater<KMesh,D>::get_tuple(_kGrid));
-    // Prepate interpolated Green's functions
-    GKType GD0_interp (grids), GD_interp(grids), GLat_interp(grids);
-    if (gridF._w_max != _fGrid._w_max || gridF._w_min != _fGrid._w_min) {
-        GD0_interp.copyInterpolate(GD0);
-        GD_interp.copyInterpolate(GD);
-        GLat_interp.copyInterpolate(GLat);
-        }
-    else { 
-        GD0_interp = GD0;
-        GD_interp = GD;
-        GLat_interp=GLat;
-        };
-        
-    auto mult = _S.beta*_S.U*_S.U*_S.w_0*_S.w_1;
-    GLocalType Lambda(gridF);
-    Lambda.copyInterpolate(_S.getLambda());
-
-        GridObject<ComplexType,FMatsubaraGrid,FMatsubaraGrid> magnetic_vertex(std::forward_as_tuple(gridF,gridF)); 
-        decltype(magnetic_vertex)::PointFunctionType VertexF2 = [&](FMatsubaraGrid::point w1, FMatsubaraGrid::point w2){return _S.getVertex4(0.0, w1,w2);};
-        auto U = _S.U;
-        typename GLocalType::FunctionType lambdaf = [mult,U](ComplexType w){return 1. - U*U/4./w/w;};
-        Lambda.fill(lambdaf);
-        VertexF2 = [&](FMatsubaraGrid::point w1, FMatsubaraGrid::point w2)->ComplexType{
-            return  mult*Lambda(w1)*Lambda(w2)*(2. + RealType(w1.index_ == w2.index_));
-        };
-        magnetic_vertex.fill(VertexF2);
-        auto StaticV4 = magnetic_vertex.getData().getAsMatrix();
-    */
 
     gk_type Lwk = this->glat_dmft()/this->gd0()*(-1.0);
     Lwk.set_tail(gftools::tools::fun_traits<typename gk_type::function_type>::constant(-1.0));
     auto GDL = this->gd()*Lwk;
 
-/*
-    // Prepare output
-    size_t nqpts = qpts.size();
-    std::vector<ComplexType> out;
-    out.reserve(nqpts);
+    const matrix_type magnetic_v_matrix = this->magnetic_vertex_[W].as_matrix(); 
 
-    GKType dual_bubbles = Diagrams::getStaticBubbles(GD_interp); 
-    GKType gdl_bubbles = Diagrams::getStaticBubbles(GDL); 
-    GKType lattice_bubbles = Diagrams::getStaticBubbles(GLat_interp); 
-    
-    GLocalType dual_bubble(gridF), GDL_bubble(gridF), LatticeBubble(gridF);
-    for (auto q : qpts) {
+    gk_type dual_bubbles = diagram_traits::calc_bubbles(gd_, W); 
+    gk_type gdl_bubbles = diagram_traits::calc_bubbles(GDL, W); 
+    gk_type lattice_bubbles = diagram_traits::calc_bubbles(glat_, W); 
 
-        ComplexType susc=0.0;
-        INFO_NONEWLINE("Evaluation of static susceptibility for q=["); for (int i=0; i<D; ++i) INFO_NONEWLINE(RealType(q[i])<<" "); INFO("]");
+    gw_type dual_bubble(fgrid_), lattice_bubble(fgrid_), gdl_bubble(fgrid_);
 
-        GDL_bubble.fill([&](typename FMatsubaraGrid::point w){return gdl_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
-        dual_bubble.fill([&](typename FMatsubaraGrid::point w){return dual_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
-        LatticeBubble.fill([&](typename FMatsubaraGrid::point w){return lattice_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
+    int kpts = kgrid_.size();
+    int totalkpts = boost::math::pow<NDim>(kpts);
+    double knorm = double(totalkpts);
+    const auto unique_kpts = lattice_t::getUniqueBZPoints(kgrid_);
 
-        auto GDL_bubble_vector = GDL_bubble.getData().getAsVector();
+    size_t nq = 1;
+    for (auto pts_it = unique_kpts.begin(); pts_it != unique_kpts.end(); pts_it++) { 
+        std::array<kmesh::point, NDim> q = pts_it->first; // point
+        real_type q_weight = real_type(pts_it->second.size()); // it's weight
+        auto other_qpts = pts_it -> second; // other points, equivalent by symmetry
+        nq++;
 
-        auto dual_bubble_matrix = dual_bubble.getData().getAsDiagonalMatrix();
+        std::complex<double> susc = 0.0;
 
-        #ifdef bs_matrix
-        auto size = StaticV4.rows();
-        auto V4Chi = MatrixType<ComplexType>::Identity(size,size) - StaticV4*dual_bubble_matrix;
-        auto D1 = V4Chi.determinant();
-        if (std::imag(D1)<1e-7 && std::real(D1)>0) { 
-            auto full_magnetic_v = Diagrams::BS(dual_bubble_matrix, StaticV4, true, false);
-            susc = (GDL_bubble_vector.transpose()*full_magnetic_v*GDL_bubble_vector)(0,0)*0.5;
+        dual_bubble.fill([&](typename fmatsubara_grid::point w){return dual_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
+        lattice_bubble.fill([&](typename fmatsubara_grid::point w){return lattice_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
+        gdl_bubble.fill([&](typename fmatsubara_grid::point w){return gdl_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
+
+        auto gdl_bubble_vector = gdl_bubble.data().as_vector();
+        //DEBUG("gdl \n" << gdl_bubble_vector);
+        matrix_type dual_bubble_matrix = dual_bubble.data().as_diagonal_matrix(); 
+        //DEBUG(" db \n" << dual_bubble_matrix);
+        //DEBUG("m_v \n" << magnetic_v_matrix);
+
+        forward_bs magnetic_bs(dual_bubble_matrix, magnetic_v_matrix, 0);
+        //matrix_type full_m = magnetic_bs.solve_inversion();
+        matrix_type full_m = magnetic_bs.solve_inversion();
+        //DEBUG("full m : \n" << full_m);
+        double m_det = magnetic_bs.determinant().real();
+
+        if (std::imag(m_det)<1e-7 && std::real(m_det)>0) { 
+            susc = (gdl_bubble_vector.transpose()*full_m*gdl_bubble_vector)(0,0)*0.5;
+            //DEBUG(gftools::tuple_tools::print_array(q));
+            //DEBUG(susc);
+            susc+=lattice_bubble.sum()*0.5;
+            //DEBUG(lattice_bubble.sum());
             }
         else susc = -1.;
 
-        #else
-        auto m1 = mult*dual_bubble*Lambda*Lambda;
-        ComplexType B_=2.0*(m1/(1.0-m1)).getData().sum();
-        if (std::imag(B_)>1e-5) throw (exRuntimeError("B is imaginary."));
-        RealType B = std::real(B_);
-        INFO("\t\tB = "<<B);
-        GLocalType C=m1*Lambda/(1.0-m1);
-        GLocalType ksi = (B*Lambda + C)/(1.-B);
-    
-        for (auto w1 : gridF.getPoints()) {
-            auto F = mult/(1.0-m1(w1))*Lambda(w1)/(1.0-B);
-            for (auto w2 : gridF.getPoints()) {
-                RealType kronecker = RealType(w1.index_ == w2.index_);
-                susc+=GDL_bubble(w1)*F*(2.*Lambda(w2)+Lambda(w1)*kronecker*(1.-B)+2.*C(w2))*GDL_bubble(w2)*0.5;
-            }
-        }
-        #endif
-
-        susc+=LatticeBubble.sum()*0.5;
-        INFO("Static susceptibility at q=" << q[0] << " = " << susc);
-        out.push_back(susc);
+        for (auto q1 : other_qpts) susc_q_data(q1) = susc; 
         };
-*/
 
     return susc_q_data;
 } 

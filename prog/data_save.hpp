@@ -16,6 +16,7 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
     int plaintext = p["plaintext"] | 1;
     double mu = p["mu"] | 0.0;
     fmatsubara_grid const& fgrid = sc.gd().template grid<0>(); 
+    bmatsubara_grid const& bgrid = sc.bgrid();
     double beta = fgrid.beta();
     kmesh const& kgrid = sc.gd().template grid<1>();
     int kpts = kgrid.size();
@@ -62,6 +63,15 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
 
     // save dmft self-energy for a consistency check
     save_grid_object(ar, top + "/sigma_dmft", sc.sigma_dmft(mu), plaintext > 0);
+
+    // susceptibilitiles
+    bool save_susc = p["save_susc"] | true;
+    bmatsubara_grid::point W0 = bgrid.find_nearest(0.0);
+    if (save_susc) { 
+        auto spin_susc = sc.spin_susc(W0);
+        save_grid_object(ar, top + "/spin_susc_W" + std::to_string(W0.value().imag()), spin_susc, plaintext > 0); 
+
+    }
 
 /*
     if (plaintext > 0) { 

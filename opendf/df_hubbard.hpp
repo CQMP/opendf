@@ -31,7 +31,9 @@ public:
     /// Run the df calculation and return the updated hybridization function
     virtual gw_type operator()(alps::params p);
     /// Get spin susceptibility at fixed frequency
-    disp_type spin_susc(bmatsubara_grid::point W);
+    disp_type spin_susc(bmatsubara_grid::point W) const;
+
+    bmatsubara_grid const& bgrid() const { return std::get<0>(magnetic_vertex_.grids()); }
 
 protected:
     using base::fgrid_;

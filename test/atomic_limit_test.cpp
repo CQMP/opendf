@@ -22,7 +22,8 @@ int main(int argc, char *argv[])
     double U = 16; 
     double beta = 1.0;
     double mu = U/2;
-    int wmax = 4;
+    int wmax = 16; //16;
+    int kpts = 16;
 
     typedef std::complex<double> complex_type;
     typedef typename fmatsubara_grid::point fpoint; 
@@ -69,7 +70,6 @@ int main(int argc, char *argv[])
     // parameters
     double hopping_t = 1.0;
     double T = 1.0/beta;
-    int kpts = 16;
 
     p["df_sc_mix"] = 1.0;
     p["df_sc_iter"] = 1;
@@ -94,16 +94,36 @@ int main(int argc, char *argv[])
     gw_type glat_loc = DF.glat_loc();
     glat_loc.savetxt("gloc_test.dat");
 
+    auto w0 = fgrid.find_nearest(I*PI/beta);
+
     gw_type gloc_comp(fgrid);
-    std::vector<std::complex<double>> v = {{  
-        4.015141253959e-02, 5.052237697122e-02, 6.151383824790e-02, 4.184934626669e-02,
-        -4.184934626669e-02, -6.151383824790e-02, -5.052237697122e-02, -4.015141253959e-02 }};
-    std::copy(v.begin(), v.end(), gloc_comp.data().data());
-    gloc_comp *= I;
-    std::cout << "local gf comparison : " << std::endl;
-    std::cout << glat_loc << "\n == \n" << gloc_comp << std::endl;
-    double diff = glat_loc.diff(gloc_comp);
-    std::cout << "diff = " << diff << std::endl;
-    EXPECT_NEAR(diff, 0, 1e-5);
+    std::vector<double> v = {{  
+        -4.175286161764e-02,
+        -6.151136778808e-02,
+        -5.052277618879e-02,
+        -4.015155827793e-02,
+        -3.274400701650e-02,
+        -2.746448171460e-02,
+        -2.358018909282e-02,
+        -2.062600757087e-02
+            }};
+    for (int i=0; i<std::min(v.size(), glat_loc.size()/2); i++) { 
+        std::cout << i << " : " << glat_loc[w0.index() + i] << " == " << v[i]*I << std::endl;
+        EXPECT_EQ(is_float_equal(glat_loc[w0.index() + i], v[i]*I, 1e-4), true);
+        };
+    std::cout << "SUCCESS" << std::endl;
+
+    // get spin susceptibility
+    disp_type spin_susc = DF.spin_susc(bgrid.find_nearest(0.0));
+    std::cout << "susc at [pi, pi] = " << spin_susc(PI,PI) << " == " << 3.468082768315e-01 <<  std::endl;
+    EXPECT_NEAR(spin_susc(PI,PI).real(), 3.468082768315e-01, 1e-3);
+    EXPECT_NEAR(spin_susc(PI,PI).imag(), 0.0, 1e-4);
+    std::cout << "susc at [0 , pi] = " << spin_susc(0, PI) << std::endl;
+    EXPECT_NEAR(spin_susc(0,PI).real(), 2.503368337900e-01, 1e-3);
+    EXPECT_NEAR(spin_susc(0,PI).imag(), 0.0, 1e-4);
+    std::cout << "susc at [0 , 0 ] = " << spin_susc(0, 0)  << " == " << 1.977592985438e-01 << std::endl;
+    EXPECT_NEAR(spin_susc(0,0).real(), 1.977592985438e-01, 1e-3);
+    EXPECT_NEAR(spin_susc(0,0).imag(), 0.0, 1e-4);
+    std::cout << "SUCCESS" << std::endl;
 }
 
