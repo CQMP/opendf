@@ -69,7 +69,9 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
     bmatsubara_grid::point W0 = bgrid.find_nearest(0.0);
 
     enum_grid rgrid(0, kgrid.size(), false); // a grid in real space
-    typedef grid_object<std::complex<double>, enum_grid, enum_grid> susc_r_type;
+    // typedef for susceptibility in real space
+    // same as grid_object<std::complex<double>, enum_grid, enum_grid> with enum_grid repeated D times.
+    typedef typename gftools::tools::ArgBackGenerator<D,enum_grid,grid_object,std::complex<double>>::type susc_r_type; 
     if (save_susc) { 
         auto spin_susc = sc.spin_susc(W0);
         save_grid_object(ar, top + "/spin_susc_W" + std::to_string(W0.value().imag())+"_k", spin_susc, plaintext > 0); 

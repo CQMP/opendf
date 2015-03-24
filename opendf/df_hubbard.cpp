@@ -252,7 +252,9 @@ typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::get_susc_(vertex_
     return susc_q_data;
 } 
 
+template class df_hubbard<cubic_traits<1>>;
 template class df_hubbard<cubic_traits<2>>;
 template class df_hubbard<cubic_traits<3>>;
+template class df_hubbard<cubic_traits<4>>;
 
 } // end of namespace open_df

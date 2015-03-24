@@ -85,7 +85,9 @@ typename df_base<LatticeT>::gw_type df_base<LatticeT>::glat_loc() const
     return std::move(glatloc);
 }
 
+template class df_base<cubic_traits<1>>;
 template class df_base<cubic_traits<2>>;
 template class df_base<cubic_traits<3>>;
+template class df_base<cubic_traits<4>>;
 
 } // end of namespace open_df

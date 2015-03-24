@@ -148,11 +148,44 @@ include_directories(
     ${CMAKE_BINARY_DIR}
 )
 
+### configure and build everything 
+# Check which lattices should be built
+# List of all known lattices
+list(APPEND known_lattices cubic1d cubic2d cubic3d cubic4d)
+# List of lattices, compiled by default
+list(APPEND default_lattices cubic2d cubic3d)
+# if no lattices specified - build all 
+list(LENGTH DF_LATTICES comp_len)
+if (${comp_len} EQUAL 0) 
+    set(DF_LATTICES ${default_lattices})
+endif()
+
+unset(df_lattices)
+foreach(lattice ${DF_LATTICES})
+    list(FIND known_lattices ${lattice} has_lattice)
+    if (${has_lattice} EQUAL -1) 
+        message(FATAL_ERROR "opendf : Unknown lattice ${lattice}")
+    else()
+        list(FIND df_lattices ${lattice} already_included)
+        if (${already_included} EQUAL -1) 
+            list(APPEND df_lattices ${lattice})
+        endif()
+    endif()
+endforeach()
+
+message(STATUS "Lattices : ${df_lattices}")
+mark_as_advanced(${df_lattices})
+set (DF_LATTICES ${df_lattices} CACHE STRING "Lattices for DF calculation" FORCE)
+
 # build library
 set (opendf_name opendf${DF_POSTFIX})
 add_subdirectory(opendf)
 # build executables
-add_subdirectory(prog)
+option(Execs "Enable executables" ON)
+if (Execs)
+    add_subdirectory(prog)
+endif (Execs)
+
 # build tests
 option(Testing "Enable testing" ON)
 if (Testing)

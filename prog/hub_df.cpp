@@ -16,14 +16,27 @@
 
 #include "data_save.hpp"
 
+#ifdef LATTICE_cubic1d
+    static constexpr int D = 1; 
+    typedef open_df::cubic_traits<D> lattice_t; 
+#elif LATTICE_cubic2d
+    static constexpr int D = 2; 
+    typedef open_df::cubic_traits<D> lattice_t; 
+#elif LATTICE_cubic3d
+    static constexpr int D = 3; 
+    typedef open_df::cubic_traits<D> lattice_t; 
+#elif LATTICE_cubic4d
+    static constexpr int D = 4; 
+    typedef open_df::cubic_traits<D> lattice_t; 
+#else 
+#error Undefined lattice
+#endif
+
 namespace po = boost::program_options;
 using namespace open_df;
 using namespace std::chrono;
 
-static constexpr int D = 2; // work in 2 dimensions
-typedef cubic_traits<D> lattice_t; 
 typedef df_hubbard<lattice_t> df_type; 
-
 typedef df_type::vertex_type vertex_type;
 typedef df_type::gw_type gw_type;
 typedef df_type::gk_type gk_type;
@@ -94,11 +107,11 @@ void run(alps::params p)
     // define lattice
     lattice_t lattice(hopping_t);
     // get dispersion
-    disp_type disp(std::forward_as_tuple(kgrid, kgrid));
+    disp_type disp(gftools::tuple_tools::repeater<kmesh, D>::get_tuple(kgrid));
     disp.fill(lattice.get_dispersion());  
         
     // construct a df run 
-    df_hubbard<cubic_traits<2>> DF(gw, Delta, lattice, kgrid, density_vertex, magnetic_vertex);
+    df_type DF(gw, Delta, lattice, kgrid, density_vertex, magnetic_vertex);
 
     // check if a resume is requested and try to resume 
     if (p["resume"].cast<bool>()) { 
@@ -138,7 +151,7 @@ void run(alps::params p)
             << duration_cast<seconds>(end-start).count()%60 << "s " 
             << duration_cast<milliseconds>(end-start).count()%1000 << "ms " 
             << std::endl;
-        p["run_time"] = int(duration_cast<seconds>(end-start).count());
+        p["run_time"] = int(duration_cast<milliseconds>(end-start).count());
 
         save_data(DF, Delta, p); 
         }
