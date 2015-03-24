@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     double U = p["U"]; 
     double beta = p["beta"];
     double mu = U/2;
-    int wmax = p["wmax"];
+    int nfermionic = p["nfermionic"];
     int nbosonic = p["nbosonic"];
     int plaintext = p["plaintext"];
     std::string output_file = p["output"];
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     typedef typename bmatsubara_grid::point bpoint; 
 
     // grids
-    fmatsubara_grid fgrid(-wmax,wmax,beta);
+    fmatsubara_grid fgrid(-nfermionic,nfermionic,beta);
     bmatsubara_grid bgrid(-nbosonic + 1,nbosonic,beta);
         
     double mult = beta*U*U/4.;
@@ -139,7 +139,7 @@ alps::params cmdline_params(int argc, char* argv[])
         ("U",                  po::value<double>()->default_value(16.0),  "value of U")
         ("beta",               po::value<double>()->default_value(1.0),  "value of inverse temperature");
     int_opts.add_options()
-        ("wmax",             po::value<int>()->default_value(40), "amount of positive fermionic freqs")
+        ("nfermionic",             po::value<int>()->default_value(40), "amount of positive fermionic freqs")
         ("nbosonic",         po::value<int>()->default_value(1), "amount of positive bosonic freqs")
         ("plaintext,p",      po::value<int>()->default_value(1), "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)");
     string_opts.add_options()
