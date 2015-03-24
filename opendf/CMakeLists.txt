@@ -10,6 +10,7 @@ set (df_src
 
 #add_library(${opendf_name} SHARED ${df_src})
 add_library(${opendf_name} STATIC ${df_src})
+set_target_properties(${opendf_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 install(TARGETS ${opendf_name}
     ARCHIVE DESTINATION lib
