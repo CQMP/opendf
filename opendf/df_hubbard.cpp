@@ -204,13 +204,12 @@ typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::get_susc_(vertex_
 
     int kpts = kgrid_.size();
     int totalkpts = boost::math::pow<NDim>(kpts);
-    double knorm = double(totalkpts);
+    //double knorm = double(totalkpts);
     const auto unique_kpts = lattice_t::getUniqueBZPoints(kgrid_);
 
     size_t nq = 1;
     for (auto pts_it = unique_kpts.begin(); pts_it != unique_kpts.end(); pts_it++) { 
         std::array<kmesh::point, NDim> q = pts_it->first; // point
-        real_type q_weight = real_type(pts_it->second.size()); // it's weight
         auto other_qpts = pts_it -> second; // other points, equivalent by symmetry
         nq++;
 
