@@ -78,7 +78,7 @@ void run(alps::params p)
 
     // fix spin symmerty
     if (gw_arr[0].diff(gw_arr[1]) > 1e-8) 
-        throw std::logic_error("Spin assymetry is not implemented.");
+        throw std::logic_error("Spin asymmetry is not implemented.");
 
     gw_type gw = gw_arr[0];
     gw_type Delta = delta_arr[0]; 

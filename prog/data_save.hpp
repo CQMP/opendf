@@ -38,7 +38,7 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
 
     // save dual quantities
     save_grid_object(ar, top + "/gd", sc.gd(), plaintext > 1);
-    save_grid_object(ar, top + "/gd0", sc.gd(), plaintext > 1);
+    save_grid_object(ar, top + "/gd0", sc.gd0(), plaintext > 1);
     save_grid_object(ar, top + "/sigma_d", sc.sigma_d(), plaintext > 1);
 
     // save lattice gf
