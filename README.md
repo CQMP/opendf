@@ -29,7 +29,7 @@ The installation is a standard cmake-based procedure. To compile (on POSIX os):
 **NB**: Since c++11 support is required for the code to work, c++ dependencies (in particular, *alpscore* and *boost*) are required to be compiled in c++11 mode. 
 
 ##### License 
-MIT. 
+GPLv2. 
 
 ##### Academic usage. 
 Please provide a citation.
