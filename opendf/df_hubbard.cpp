@@ -5,19 +5,36 @@
 namespace open_df { 
 
 template <typename LatticeT>
+alps::params& df_hubbard<LatticeT>::define_parameters(alps::params& p)
+{
+    p.define<double>("df_sc_mix",    1.0,   "mixing between df iterations")
+     .define<double>("df_sc_cutoff", 1e-7,  "cutoff for dual iterations")
+     .define<double>("bs_mix",       1.0,   "mixing between df iterations")
+
+     .define<int>("df_sc_iter",     1000,   "maximum df iterations")
+     .define<int>("nbosonic",       1,     "amount of bosonic freqs to use (reduced also by the amount of freqs in the vertex")
+     .define<int>("n_bs_iter",      100,      "amount of self-consistent iterations in BS (with eval_bs_sc = 1)")
+        
+     .define<bool>("update_df_mixing", 1, "update mixing of dual gf for better accuracy")
+     .define<bool>("eval_bs_sc", 0, "evaluate Bethe-Salpeter equation self-consistently");
+
+    return p;
+}
+
+template <typename LatticeT>
 typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::params p)
 {
     std::cout << "Starting ladder dual fermion calculations" << std::endl;
 
-    int n_bs_iter = p["n_bs_iter"] | 100;   // number of Bethe Salpeter iterations, if iterative evaluation is requested (also used, when the ladder can't be converged)
-    double bs_mix = p["bs_mix"] | 1.0;      // mixing between subsequent Bethe-Salpeter iterations 
-    double df_sc_cutoff = p["df_sc_cutoff"] | 1e-7; // cutoff for determining convergence of dual Green's function
-    double df_sc_mix = p["df_sc_mix"] | 1.0;    // mixing between DF iterations
-    bool update_df_sc_mixing = p["update_df_mixing"] | true; // reduce mixing of DF iterations, if convergence is not achieved 
-    int df_sc_iter = p["df_sc_iter"] | 1000; // maximum number of DF iterations
-    int nbosonic_ = std::min(int(p["nbosonic"] | 1), magnetic_vertex_.grid().max_n() + 1); // amount of bosonic frequencies to use
+    int n_bs_iter = p["n_bs_iter"];   // number of Bethe Salpeter iterations, if iterative evaluation is requested (also used, when the ladder can't be converged)
+    double bs_mix = p["bs_mix"];      // mixing between subsequent Bethe-Salpeter iterations 
+    double df_sc_cutoff = p["df_sc_cutoff"]; // cutoff for determining convergence of dual Green's function
+    double df_sc_mix = p["df_sc_mix"];    // mixing between DF iterations
+    bool update_df_sc_mixing = p["update_df_mixing"]; // reduce mixing of DF iterations, if convergence is not achieved 
+    int df_sc_iter = p["df_sc_iter"]; // maximum number of DF iterations
+    int nbosonic_ = std::min(int(p["nbosonic"]), magnetic_vertex_.grid().max_n() + 1); // amount of bosonic frequencies to use
     #ifndef NDEBUG 
-    int verbosity = p["verbosity"] | 0; // degugging verbosity - relevant only in debug build mode
+    int verbosity = p["verbosity"]; // degugging verbosity - relevant only in debug build mode
     #endif
 
     int kpts = kgrid_.size();
@@ -203,7 +220,7 @@ typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::get_susc_(vertex_
     gw_type dual_bubble(fgrid_), lattice_bubble(fgrid_), gdl_bubble(fgrid_);
 
     int kpts = kgrid_.size();
-    int totalkpts = boost::math::pow<NDim>(kpts);
+    //int totalkpts = boost::math::pow<NDim>(kpts);
     //double knorm = double(totalkpts);
     const auto unique_kpts = lattice_t::getUniqueBZPoints(kgrid_);
 

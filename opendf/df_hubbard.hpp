@@ -28,10 +28,14 @@ public:
         d_evals_(std::tuple_cat(std::forward_as_tuple(this->magnetic_vertex_.grid()), this->disp_.grids())),
         m_evals_(d_evals_.grids()) 
         {}
+
+    /// Define common parameters
+    static alps::params& define_parameters(alps::params &p);
     /// Run the df calculation and return the updated hybridization function
     virtual gw_type operator()(alps::params p);
     /// Get spin susceptibility at fixed frequency
     disp_type spin_susc(bmatsubara_grid::point W) const { return std::forward<disp_type>(get_susc_(magnetic_vertex_, W, 0.5)); }
+    /// Get charge susceptibility at fixed frequency
     disp_type charge_susc(bmatsubara_grid::point W) const { return std::forward<disp_type>(get_susc_(density_vertex_, W, 1.0)); }
 
     bmatsubara_grid const& bgrid() const { return std::get<0>(magnetic_vertex_.grids()); }

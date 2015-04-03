@@ -1,10 +1,8 @@
 #include <alps/params.hpp>
-#include <boost/program_options.hpp>
 
 #include "opendf/lattice_traits.hpp"
 #include "opendf/df_hubbard.hpp"
 
-namespace po = boost::program_options;
 using namespace open_df;
 
 static constexpr int D = 2; // work in 2 dimensions
@@ -123,44 +121,20 @@ int main(int argc, char *argv[])
     
 }
 
-/// Check that 2 cmd options are not specified at the same time.
-void conflicting_options(const po::variables_map& vm, const char* opt1, const char* opt2);
-
 alps::params cmdline_params(int argc, char* argv[])
 {
-    alps::params p;
+    alps::params p(argc, (const char**)argv);
+    p.description("opendf atomic limit input");
 
-	po::options_description generic_opts("generic"), double_opts("double opts"), vec_double_opts("vector<double> opts"), 
-		int_opts("int_opts"), string_opts("string_opts"), bool_opts("bool opts");
+    p.define<double>("U",                  16.0,  "value of U")
+     .define<double>("beta",               1.0,  "value of inverse temperature")
+     .define<int>("nfermionic",             40, "amount of positive fermionic freqs")
+     .define<int>("nbosonic",         1, "amount of positive bosonic freqs")
+     .define<int>("plaintext",      1, "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)")
+     .define<std::string>("output",          "output.h5", "output file");
 
-    generic_opts.add_options()
-        ("help",          "help");
-    double_opts.add_options()
-        ("U",                  po::value<double>()->default_value(16.0),  "value of U")
-        ("beta",               po::value<double>()->default_value(1.0),  "value of inverse temperature");
-    int_opts.add_options()
-        ("nfermionic",             po::value<int>()->default_value(40), "amount of positive fermionic freqs")
-        ("nbosonic",         po::value<int>()->default_value(1), "amount of positive bosonic freqs")
-        ("plaintext,p",      po::value<int>()->default_value(1), "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)");
-    string_opts.add_options()
-        ("output",          po::value<std::string>()->default_value("output.h5"), "output file");
+    if (p.help_requested(std::cerr)) { exit(1); };
 
-    po::options_description cmdline_opts;
-    cmdline_opts.add(double_opts).add(int_opts).add(string_opts).add(generic_opts).add(bool_opts).add(vec_double_opts);
-
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, cmdline_opts, po::command_line_style::unix_style ^ po::command_line_style::allow_short), vm);
-
-    // Help options
-    if (vm.count("help")) { 
-        std::cout << "Program options : \n" << cmdline_opts << std::endl; exit(0);  }
-
-    for (auto x : double_opts.options()) p[x->long_name()] = vm[x->long_name()].as<double>();
-    for (auto x : int_opts.options()) p[x->long_name()] = vm[x->long_name()].as<int>();
-    for (auto x : string_opts.options()) p[x->long_name()] = vm[x->long_name()].as<std::string>();
-    for (auto x : bool_opts.options()) p[x->long_name()] = vm[x->long_name()].as<bool>();
-    for (auto x : vec_double_opts.options()) p[x->long_name()] = vm[x->long_name()].as<std::vector<double>>();
-    
     return p;
 }
 
@@ -170,12 +144,4 @@ inline void print_section (const std::string& str)
   std::cout << str << std::endl;
   std::cout << std::string(str.size(),'=') << std::endl;
 }
-
-void conflicting_options(const po::variables_map& vm, const char* opt1, const char* opt2)
-{
-    if (vm.count(opt1) && !vm[opt1].defaulted() && vm.count(opt2) && !vm[opt2].defaulted())
-        throw std::logic_error(std::string("Conflicting options '") + opt1 + "' and '" + opt2 + "'.");
-}
-
-
 

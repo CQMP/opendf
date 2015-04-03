@@ -5,6 +5,13 @@
 
 namespace open_df { 
 
+alps::params& save_define_parameters(alps::params& p)
+{
+     p.define<int>("plaintext",    1,      "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)");
+     p.define<bool>("save_susc",    1,      "save susceptibilities");
+    return p;
+}
+
 template <typename SCType>
 void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::params p)
 {
@@ -13,8 +20,8 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
     typedef typename SCType::disp_type disp_type;
 
     static constexpr int D = SCType::NDim;
-    int plaintext = p["plaintext"] | 1;
-    double mu = p["mu"] | 0.0;
+    int plaintext = p["plaintext"];
+    double mu = p["mu"];
     fmatsubara_grid const& fgrid = sc.gd().template grid<0>(); 
     bmatsubara_grid const& bgrid = sc.bgrid();
     double beta = fgrid.beta();
@@ -24,7 +31,7 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
 
     auto w0 = fgrid.find_nearest(I*PI / beta);
 
-    std::string output_file = p["output"] | "output.h5";
+    std::string output_file = p["output"];
     std::string top = "/df";
 
     std::cout << "Saving data to " << output_file << top << std::endl; 
@@ -65,7 +72,7 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
     save_grid_object(ar, top + "/sigma_dmft", sc.sigma_dmft(mu), plaintext > 0);
 
     // susceptibilitiles
-    bool save_susc = p["save_susc"] | true;
+    bool save_susc = p["save_susc"];
     bmatsubara_grid::point W0 = bgrid.find_nearest(0.0);
 
     enum_grid rgrid(0, kgrid.size(), false); // a grid in real space

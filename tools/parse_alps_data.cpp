@@ -2,13 +2,11 @@
  * This is a simple unoptimized code to evaluate some low-order dual diagrams in FK model
  */
 
-#include <boost/program_options.hpp>
 #include <alps/params.hpp>
 #include <Eigen/Core>
 #include <gftools.hpp>
 #include <gftools/hdf5.hpp>
 
-namespace po = boost::program_options;
 using namespace gftools;
 
 typedef grid_object<std::complex<double>, bmatsubara_grid, fmatsubara_grid, fmatsubara_grid> vertex_type;
@@ -47,7 +45,7 @@ int main(int argc, char *argv[])
     fmatsubara_grid fgrid_gw = gw_arr[0].grid();
     gw_type iw(fgrid_gw); for (auto x : fgrid_gw.points()) iw[x] = x; 
     std::array<gw_type, 2> delta_arr = gftools::tuple_tools::repeater<gw_type, 2>::get_array(gw_type(fgrid_gw));
-    double mu = p["mu_defaulted"].cast<bool>()?sigma_arr[0][0].real():p["mu"].cast<double>();
+    double mu = p["mu_defaulted"].as<bool>()?sigma_arr[0][0].real():p["mu"].as<double>();
     std::cout << "mu = " << mu << std::endl;
     for (int s = 0; s < 2; s++) { 
         delta_arr[s] =  iw + mu - sigma_arr[s] - 1./gw_arr[s];
@@ -70,8 +68,8 @@ int main(int argc, char *argv[])
 
     // now move on to export DF-ready data
     std::cout << "Saving data to " << outfile_name << top << std::endl;
-    int wfmax = std::min(p["nfermionic"].cast<int>(), fgrid_input.max_n() + 1);
-    int wbmax = std::min(p["nbosonic"].cast<int>(), bgrid_input.max_n() + 1);
+    int wfmax = std::min(p["nfermionic"].as<int>(), fgrid_input.max_n() + 1);
+    int wbmax = std::min(p["nbosonic"].as<int>(), bgrid_input.max_n() + 1);
     fmatsubara_grid fgrid(-wfmax, wfmax, beta);
     bmatsubara_grid bgrid(-wbmax+1, wbmax, beta);
         
@@ -226,42 +224,23 @@ std::array<vertex_type, 2> read_vertex(std::string fname, double beta, bool skip
 
 alps::params cmdline_params(int argc, char* argv[])
 {
-    alps::params p;
+    alps::params p(argc, (const char**)argv);
+    p.description("opendf ALPS data parser");
 
-	po::options_description generic_opts("generic"), double_opts("double opts"), vec_double_opts("vector<double> opts"), 
-		int_opts("int_opts"), string_opts("string_opts"), bool_opts("bool opts");
+    p.define<double>("mu", 0.0, "chemical potential (measured from half-filling level)")
+     .define<int>   ("plaintext",      0, "save additionally to plaintext files")
+     .define<int>   ("nbosonic",      1024, "max number of non-negative bosonic Matsubara frequencies")
+     .define<int>   ("nfermionic",      1024, "max number of positive fermionic Matsubara frequencies")
+        
+     .define<std::string>("vertex_file", "vertexF.dat", "vertex file")
+     .define<std::string>("gw_file", "gw.dat", "local gw file")
+     .define<std::string>("sigma_file", "sigma.dat", "local sigma file");
 
-    generic_opts.add_options()
-        ("help",          "help");
-    double_opts.add_options()
-        ("mu", po::value<double>()->default_value(0.0), "chemical potential (measured from half-filling level)");
-    int_opts.add_options()
-        ("plaintext,p",      po::value<int>()->default_value(0), "save additionally to plaintext files")
-        ("nbosonic",      po::value<int>()->default_value(1024), "max number of non-negative bosonic Matsubara frequencies")
-        ("nfermionic",      po::value<int>()->default_value(1024), "max number of positive fermionic Matsubara frequencies");
-    string_opts.add_options()
-        ("vertex_file", po::value<std::string>()->default_value("vertexF.dat"), "vertex file")
-        ("gw_file", po::value<std::string>()->default_value("gw.dat"), "local gw file")
-        ("sigma_file", po::value<std::string>()->default_value("sigma.dat"), "local sigma file");
+    if (p.help_requested(std::cerr)) { exit(1); };
 
-    po::options_description cmdline_opts;
-    cmdline_opts.add(double_opts).add(int_opts).add(string_opts).add(generic_opts).add(bool_opts).add(vec_double_opts);
+    // FIXME p["mu_defaulted"]=p["mu"].defaulted();
+    p["mu_defaulted"] = false;
 
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, cmdline_opts, po::command_line_style::unix_style ^ po::command_line_style::allow_short), vm);
-
-    // Help options
-    if (vm.count("help")) { 
-        std::cout << "Program options : \n" << cmdline_opts << std::endl; exit(0);  }
-    
-    p["mu_defaulted"]=vm["mu"].defaulted();
-
-    for (auto x : double_opts.options()) p[x->long_name()] = vm[x->long_name()].as<double>();
-    for (auto x : int_opts.options()) p[x->long_name()] = vm[x->long_name()].as<int>();
-    for (auto x : string_opts.options()) p[x->long_name()] = vm[x->long_name()].as<std::string>();
-    for (auto x : bool_opts.options()) p[x->long_name()] = vm[x->long_name()].as<bool>();
-    for (auto x : vec_double_opts.options()) p[x->long_name()] = vm[x->long_name()].as<std::vector<double>>();
-    
     return p;
 }
 
