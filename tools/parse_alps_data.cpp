@@ -239,7 +239,7 @@ alps::params cmdline_params(int argc, char* argv[])
     if (p.help_requested(std::cerr)) { exit(1); };
 
     // FIXME p["mu_defaulted"]=p["mu"].defaulted();
-    p["mu_defaulted"] = false;
+    p["mu_defaulted"] = p.defaulted("mu");
 
     return p;
 }
