@@ -18,6 +18,7 @@ typedef df_type::disp_type disp_type;
 int main(int argc, char *argv[])
 {
     alps::params p; 
+    df_type::define_parameters(p);
 
     double U = 16; 
     double beta = 1.0;

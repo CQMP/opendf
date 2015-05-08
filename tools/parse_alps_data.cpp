@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
         gw_type gw(fgrid), delta(fgrid);
 
         for (auto x : fgrid.points()) { 
-            int n = fgrid.getNumber(x);
+            int n = FMatsubaraIndex(x,beta);
             if (n >= 0) { 
                 auto p = fgrid_gw.find_nearest(FMatsubara(n, beta));
                 gw[x] = gw_in[p];
