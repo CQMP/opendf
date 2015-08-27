@@ -1,5 +1,4 @@
 set (execs 
-parse_alps_data
 generate_atomic
 )
 
