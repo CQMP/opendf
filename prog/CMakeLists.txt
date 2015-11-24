@@ -18,7 +18,7 @@ foreach (df_lattice ${df_lattices})
         install (TARGETS ${exec} DESTINATION bin )
     endforeach(exec_name)
 
-    if (BuildPython) 
+    if (OPENDF_HAS_PYTHON) 
         # build python module
         foreach(exec_name ${execs})
             set(exec ${exec_name}_${df_lattice})
@@ -27,6 +27,6 @@ foreach (df_lattice ${df_lattices})
             target_compile_definitions(py${exec} PUBLIC -DBUILD_PYTHON_MODULE -DLATTICE_${df_lattice})
             install ( TARGETS py${exec} DESTINATION lib/python )
         endforeach()
-    endif (BuildPython) 
+    endif (OPENDF_HAS_PYTHON) 
 
 endforeach(df_lattice)
