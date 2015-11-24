@@ -1,4 +1,3 @@
-
 #fk_diagrams 
 set (execs 
 hub_df
@@ -22,7 +21,9 @@ foreach (df_lattice ${df_lattices})
         # build python module
         foreach(exec_name ${execs})
             set(exec ${exec_name}_${df_lattice})
-            add_library(py${exec} MODULE ${exec_name}.cpp ALIAS py${exec})
+            add_library(py${exec} MODULE ${exec_name}.cpp)
+            set_target_properties(py${exec} PROPERTIES PREFIX "")
+            #add_library(py${exec} ALIAS py${exec})
             target_link_libraries(py${exec} ${opendf_name})
             target_compile_definitions(py${exec} PUBLIC -DBUILD_PYTHON_MODULE -DLATTICE_${df_lattice})
             install ( TARGETS py${exec} DESTINATION lib/python )
