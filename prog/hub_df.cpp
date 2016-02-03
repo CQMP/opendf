@@ -84,6 +84,9 @@ void run(alps::params p)
     vertex_type density_vertex = vertex_input[0] + vertex_input[1];
     vertex_type magnetic_vertex = vertex_input[0] - vertex_input[1];
 
+    magnetic_vertex.savetxt("magnetic_vertex.dat");
+    density_vertex.savetxt("density_vertex.dat");
+
     if (gw.grid() != vertex_input[0].template grid<1>()) 
         throw std::logic_error("Green's function and vertex are defined on different grids. Exiting.");
 
