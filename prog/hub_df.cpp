@@ -84,11 +84,9 @@ void run(alps::params p)
     vertex_type density_vertex = vertex_input[0] + vertex_input[1];
     vertex_type magnetic_vertex = vertex_input[0] - vertex_input[1];
 
-    magnetic_vertex.savetxt("magnetic_vertex.dat");
-    density_vertex.savetxt("density_vertex.dat");
-
     if (gw.grid() != vertex_input[0].template grid<1>()) 
         throw std::logic_error("Green's function and vertex are defined on different grids. Exiting.");
+
 
     // parameters
     double hopping_t = p["hopping"];
@@ -155,6 +153,18 @@ void run(alps::params p)
         p["run_time"] = int(duration_cast<milliseconds>(end-start).count());
 
         save_data(DF, Delta, p); 
+
+        magnetic_vertex.savetxt("magnetic_vertex.dat");
+        density_vertex.savetxt("density_vertex.dat");
+        fmatsubara_grid const& fgrid = magnetic_vertex.template grid<1>();
+        bmatsubara_grid const& bgrid = magnetic_vertex.template grid<0>();
+        bmatsubara_grid::point W0 = bgrid.find_nearest(0.0);
+        typename df_type::diagram_traits::fvertex_type m0(fgrid, fgrid);
+        typename df_type::diagram_traits::fvertex_type d0(fgrid, fgrid);
+        m0.data() = magnetic_vertex[W0];
+        d0.data() = density_vertex[W0];
+        m0.savetxt("magnetic_vertex_W0.dat");
+        d0.savetxt("density_vertex_W0.dat");
         }
 }
 
