@@ -33,6 +33,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     bool update_df_sc_mixing = p["update_df_mixing"]; // reduce mixing of DF iterations, if convergence is not achieved 
     int df_sc_iter = p["df_sc_iter"]; // maximum number of DF iterations
     int nbosonic_ = std::min(int(p["nbosonic"]), magnetic_vertex_.grid().max_n() + 1); // amount of bosonic frequencies to use
+    bool eval_bs_sc = p["eval_bs_sc"]; 
     #ifndef NDEBUG 
     int verbosity = p["verbosity"]; // degugging verbosity - relevant only in debug build mode
     #endif
@@ -107,14 +108,14 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 // magnetic channel
                 std::cout << "\tMagnetic " << std::flush;
                 forward_bs magnetic_bs(dual_bubble_matrix, magnetic_v_matrix, 0);
-                full_m = magnetic_bs.solve(false, n_bs_iter, bs_mix);
+                full_m = magnetic_bs.solve(eval_bs_sc, n_bs_iter, bs_mix);
                 double m_det = magnetic_bs.determinant().real();
                 std::cout << "det = " << m_det;
                 min_det = std::min(min_det, m_det); 
                 // density channel
                 std::cout << "\tDensity " << std::flush;
                 forward_bs density_bs(dual_bubble_matrix, density_v_matrix, 0);
-                full_d = density_bs.solve(false, n_bs_iter, bs_mix);
+                full_d = density_bs.solve(eval_bs_sc, n_bs_iter, bs_mix);
                 double d_det = density_bs.determinant().real();
                 std::cout << "det = " << d_det;
                 min_det = std::min(min_det, d_det); 
