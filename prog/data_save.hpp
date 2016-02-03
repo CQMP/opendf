@@ -29,7 +29,8 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
     int kpts = kgrid.size();
     double knorm = pow<D>(kpts);
 
-    auto w0 = fgrid.find_nearest(I*PI / beta);
+    fmatsubara_grid::point w0 = fgrid.find_nearest(I*PI / beta);
+    bmatsubara_grid::point W0 = bgrid.find_nearest(0.0);
 
     std::string output_file = p["output"];
     std::string top = "/df";
@@ -47,6 +48,19 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
     save_grid_object(ar, top + "/gd", sc.gd(), plaintext > 1);
     save_grid_object(ar, top + "/gd0", sc.gd0(), plaintext > 1);
     save_grid_object(ar, top + "/sigma_d", sc.sigma_d(), plaintext > 1);
+
+    // save dual bubbles
+    gk_type dual_bubbles0_W0 = SCType::diagram_traits::calc_bubbles(sc.gd0(), W0);
+    gk_type dual_bubbles_W0 = SCType::diagram_traits::calc_bubbles(sc.gd(), W0);
+    save_grid_object(ar, top + "/dual_bubble0_W0", dual_bubbles0_W0, plaintext > 1);
+    save_grid_object(ar, top + "/dual_bubble_W0", dual_bubbles_W0, plaintext > 1);
+
+    disp_type db0_W0_w0(tuple_tools::repeater<kmesh,D>::get_tuple(kgrid));
+    disp_type db_W0_w0(db0_W0_w0.grids());
+    db0_W0_w0.data() = dual_bubbles0_W0[w0];
+    db_W0_w0.data() = dual_bubbles_W0[w0];
+    save_grid_object(ar, top + "/dual_bubble0_W0_w0", db0_W0_w0, plaintext > 1);
+    save_grid_object(ar, top + "/dual_bubble_W0_w0", db_W0_w0, plaintext > 1);
 
     // save lattice gf
     save_grid_object(ar, top + "/glat", sc.glat(), plaintext > 1);
@@ -73,7 +87,6 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
 
     // susceptibilitiles
     bool save_susc = p["save_susc"];
-    bmatsubara_grid::point W0 = bgrid.find_nearest(0.0);
 
     enum_grid rgrid(0, kgrid.size(), false); // a grid in real space
     // typedef for susceptibility in real space
