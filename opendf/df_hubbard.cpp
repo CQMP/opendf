@@ -79,6 +79,12 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
             std::cout << "Calculating bubbles" << std::endl;
             gk_type dual_bubbles = diagram_traits::calc_bubbles(gd_, W); 
 
+                
+                
+            std::array<double, NDim> q1; q1.fill(0.0);
+            typename gk_type::arg_tuple W_shift = std::tuple_cat(std::make_tuple(W_val),q1);
+            gk_type gd_shift = gd_.shift(W_shift);
+
             d_v.data() = density_vertex_[W];
             m_v.data() = magnetic_vertex_[W];
 
@@ -140,7 +146,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
             std::cout << "Updating sigma" << std::endl;
             for (auto iw1 : fgrid_.points()) {
                 auto v4r = run_fft(full_vertex[iw1], FFTW_FORWARD)/knorm;
-                auto gdr = run_fft(gd_[iw1], FFTW_BACKWARD);
+                auto gdr = run_fft(gd_shift[iw1], FFTW_BACKWARD);
                 // in chosen notation - a.k.a horizontal ladder with (-0.25 \gamma^4 f^+ f f^+ f ) the sign in +
                 sigma_d_[iw1]+= (1.0*T)*run_fft(v4r*gdr, FFTW_FORWARD); 
                 };
