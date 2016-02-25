@@ -7,7 +7,7 @@ namespace open_df {
 
 alps::params& save_define_parameters(alps::params& p)
 {
-     p.define<int>("plaintext",    1,      "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)");
+     p.define<int>("plaintext",    0,      "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)");
      p.define<bool>("save_susc",    1,      "save susceptibilities");
     return p;
 }

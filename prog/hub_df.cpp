@@ -1,7 +1,7 @@
 #include <opendf/config.hpp>
 
 #ifdef OPENDF_ENABLE_MPI
-#include <boost/mpi.hpp>
+#include <alps/utilities/boost_mpi.hpp>
 #define mpi_cout if (!comm.rank()) std::cout
 #else
 #define mpi_cout std::cout
@@ -51,7 +51,7 @@ inline void print_section (const std::string& str)
 void run(alps::params p)
 {
     #ifdef OPENDF_ENABLE_MPI
-    boost::mpi::communicator comm;
+    alps::mpi::communicator comm;
     #endif 
 
     print_section("DF ladder in " + std::to_string(D) + " dimensions.");
@@ -154,17 +154,19 @@ void run(alps::params p)
 
         save_data(DF, Delta, p); 
 
-        magnetic_vertex.savetxt("magnetic_vertex.dat");
-        density_vertex.savetxt("density_vertex.dat");
-        fmatsubara_grid const& fgrid = magnetic_vertex.template grid<1>();
-        bmatsubara_grid const& bgrid = magnetic_vertex.template grid<0>();
-        bmatsubara_grid::point W0 = bgrid.find_nearest(0.0);
-        typename df_type::diagram_traits::fvertex_type m0(fgrid, fgrid);
-        typename df_type::diagram_traits::fvertex_type d0(fgrid, fgrid);
-        m0.data() = magnetic_vertex[W0];
-        d0.data() = density_vertex[W0];
-        m0.savetxt("magnetic_vertex_W0.dat");
-        d0.savetxt("density_vertex_W0.dat");
+        if (p["plaintext"].as<int>() > 0) { 
+            magnetic_vertex.savetxt("magnetic_vertex_input.dat");
+            density_vertex.savetxt("density_vertex_input.dat");
+            fmatsubara_grid const& fgrid = magnetic_vertex.template grid<1>();
+            bmatsubara_grid const& bgrid = magnetic_vertex.template grid<0>();
+            bmatsubara_grid::point W0 = bgrid.find_nearest(0.0);
+            typename df_type::diagram_traits::fvertex_type m0(fgrid, fgrid);
+            typename df_type::diagram_traits::fvertex_type d0(fgrid, fgrid);
+            m0.data() = magnetic_vertex[W0];
+            d0.data() = density_vertex[W0];
+            m0.savetxt("magnetic_vertex_input_W0.dat");
+            d0.savetxt("density_vertex_input_W0.dat");
+            }
         }
 }
 
@@ -179,7 +181,7 @@ alps::params cmdline_params(int argc, char* argv[]);
 int main(int argc, char *argv[])
 {
     #ifdef OPENDF_ENABLE_MPI
-    boost::mpi::environment env(argc, argv);
+    MPI_Init(&argc, &argv);
     #endif
 
     try { 
