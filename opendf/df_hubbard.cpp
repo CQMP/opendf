@@ -17,6 +17,8 @@ alps::params& df_hubbard<LatticeT>::define_parameters(alps::params& p)
         
      .define<bool>("update_df_mixing", 1, "update mixing of dual gf for better accuracy")
      .define<bool>("eval_bs_sc", 0, "evaluate Bethe-Salpeter equation self-consistently");
+    
+    p["store_full_diag_vertex"] = false;
 
     return p;
 }
@@ -34,6 +36,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     int df_sc_iter = p["df_sc_iter"]; // maximum number of DF iterations
     int nbosonic_ = std::min(int(p["nbosonic"]), magnetic_vertex_.grid().max_n() + 1); // amount of bosonic frequencies to use
     bool eval_bs_sc = p["eval_bs_sc"]; 
+    bool store_full_diag_vertex = p["store_full_diag_vertex"];
     #ifndef NDEBUG 
     int verbosity = p["verbosity"]; // degugging verbosity - relevant only in debug build mode
     #endif
@@ -59,6 +62,12 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     gk_type full_vertex(gd0_.grids());
     matrix_type full_m(fgrid_.size(), fgrid_.size()), full_d(full_m), full_m2(full_m), full_d2(full_d);
     double min_det = 1;
+
+    // full vertex cache
+    typedef typename diagram_traits::full_diag_vertex_type full_diag_vertex_t; 
+    if (store_full_diag_vertex) { 
+        full_diag_vertex_ptr_.reset(new full_diag_vertex_t(std::tuple_cat(std::make_tuple(bgrid), gd0_.grids()))); 
+    }
 
     // stream convergence
     std::ofstream diffDF_stream("diffDF.dat",std::ios::out);
@@ -141,6 +150,9 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                         };
                     };
                 std::cout << std::endl;
+                if (store_full_diag_vertex) { 
+                    (*full_diag_vertex_ptr_)[W] = full_vertex.data();
+                    }
                 } // end bz loop
 
             std::cout << "Updating sigma" << std::endl;
@@ -274,6 +286,22 @@ typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::get_susc_(vertex_
 
     return susc_q_data;
 } 
+
+template <typename LatticeT>
+void df_hubbard<LatticeT>::calc_full_diag_vertex(alps::params p) //, std::vector<bz_point> kpoints)
+{
+    p["store_full_diag_vertex"] = true;
+    p["df_sc_mix"] = 0;
+    p["df_sc_iter"] = 1;
+    // rerun self-consistency and get the full vertex for diagnostics
+    this->operator()(p);
+}
+
+template <typename LatticeT>
+void df_hubbard<LatticeT>::fluctuation_diagnostics(std::vector<bz_point> kpoints) const
+{
+}
+
 
 template class df_hubbard<cubic_traits<1>>;
 template class df_hubbard<cubic_traits<2>>;

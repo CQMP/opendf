@@ -16,6 +16,7 @@ public:
     using typename base::gw_type;
     using typename base::gk_type;
     using typename base::disp_type;
+    using typename base::bz_point;
     using base::NDim;
     using typename base::vertex_eval_type;
     typedef diagrams::BetheSalpeter<matrix_type, true> forward_bs;
@@ -40,6 +41,9 @@ public:
 
     bmatsubara_grid const& bgrid() const { return std::get<0>(magnetic_vertex_.grids()); }
 
+    void calc_full_diag_vertex(alps::params p); // std::vector<bz_point> kpoints); 
+    void fluctuation_diagnostics(std::vector<bz_point> kpoints) const;
+
 protected:
     disp_type get_susc_(vertex_type const& in, bmatsubara_grid::point W, double norm) const;
     using base::fgrid_;
@@ -51,6 +55,9 @@ protected:
     using base::gw_;
     using base::delta_;
     using base::glat_;
+    // a pointer to store the diagonal (in freq) component of the full vertex, that is used in the Schwinger-Dyson equation for the self-energy
+    std::unique_ptr<typename diagram_traits::full_diag_vertex_type> full_diag_vertex_ptr_; 
+
     /// An impurity vertex in the density channel
     vertex_type density_vertex_;
     /// An impurity vertex in the magnetic channel

@@ -9,6 +9,7 @@ alps::params& save_define_parameters(alps::params& p)
 {
      p.define<int>("plaintext",    0,      "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)");
      p.define<bool>("save_susc",    1,      "save susceptibilities");
+     p.define<bool>("fluct_diag",    0,      "perform fluctuation diagnostics");
     return p;
 }
 
@@ -104,6 +105,12 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
         susc_r.data() = run_fft(charge_susc.data(), FFTW_BACKWARD);
         save_grid_object(ar, top + "/charge_susc_W" + std::to_string(W0.value().imag())+"_r", susc_r, plaintext > 0); 
     }
+/*
+    if (p["fluct_diag"].as<bool>()) { 
+        std::vector<typename SCType::bz_point> fluct_pts;
+        sc.fluctuation_diagnostics(p, fluct_pts);
+    }
+*/
 
 /*
     if (plaintext > 0) { 

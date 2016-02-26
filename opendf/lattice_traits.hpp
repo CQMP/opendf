@@ -18,6 +18,7 @@ struct lattice_traits_base {
     constexpr static size_t NDim = D;
     typedef typename tools::ArgFunGenerator<D,real_type,real_type>::type ArgFunType;
     typedef typename tools::ArgBackGenerator<D,real_type,std::tuple>::type arg_tuple;
+    typedef BZPoint<D> bz_point;
 
     template <typename Arg1, typename ...Args> 
         typename std::enable_if<sizeof...(Args) == D-1 && std::is_convertible<Arg1,real_type>::value, real_type>::type 

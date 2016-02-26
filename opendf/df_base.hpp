@@ -11,6 +11,7 @@ template <typename LatticeT>
 class df_base { 
 public:
     typedef diagrams::diagram_traits<LatticeT> diagram_traits;
+    typedef typename LatticeT::bz_point bz_point;
     typedef typename diagram_traits::lattice_t lattice_t;
     typedef typename diagram_traits::vertex_type vertex_type;
     typedef typename diagram_traits::fvertex_type fvertex_type;

@@ -152,6 +152,11 @@ void run(alps::params p)
             << std::endl;
         p["run_time"] = int(duration_cast<milliseconds>(end-start).count());
 
+        if (p["fluct_diag"].as<bool>()) { 
+            std::cout << "Extracting full equal-fermionic frequency vertex" << std::endl;
+            DF.calc_full_diag_vertex(p);
+            }
+
         save_data(DF, Delta, p); 
 
         if (p["plaintext"].as<int>() > 0) { 

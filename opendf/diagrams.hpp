@@ -19,6 +19,7 @@ struct diagram_traits {
     typedef typename gftools::tools::ArgBackGenerator<NDim,kmesh,grid_object,complex_type,fmatsubara_grid>::type gk_type;
     typedef typename gftools::tools::ArgBackGenerator<NDim,kmesh,grid_object,complex_type>::type disp_type;
     typedef typename gftools::tools::ArgBackGenerator<NDim,kmesh,grid_object,complex_type,bmatsubara_grid>::type vertex_eval_type;
+    typedef typename gftools::tools::ArgBackGenerator<NDim,kmesh,grid_object,complex_type,bmatsubara_grid, fmatsubara_grid>::type full_diag_vertex_type;
 
     /// Calculate a static bubble $-T \Sum_k G(i\omega, k) G(i\omega, k+q) (at bosonic freq = 0) for a given GF
     static gk_type calc_static_bubbles(gk_type const& gf);
