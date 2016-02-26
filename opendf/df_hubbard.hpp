@@ -40,12 +40,14 @@ public:
     disp_type spin_susc(bmatsubara_grid::point W) const { return std::forward<disp_type>(get_susc_(magnetic_vertex_, W, 0.5)); }
     /// Get charge susceptibility at fixed frequency
     disp_type charge_susc(bmatsubara_grid::point W) const { return std::forward<disp_type>(get_susc_(density_vertex_, W, 1.0)); }
-
+    /// The grid of bosonic frequencies of the vertex (note - the number of bosonic freqs for the calculation is controlled by a separate parameter)
     bmatsubara_grid const& bgrid() const { return std::get<0>(magnetic_vertex_.grids()); }
-
-    void calc_full_diag_vertex(alps::params p); // std::vector<bz_point> kpoints); 
+    /// Calculate and save the equal fermionic-frequency component of the full dual vertex
+    void calc_full_diag_vertex(alps::params p); 
+    /// Retrieve the equal fermionic-frequency component of the full dual vertex
     full_diag_vertex_type const& full_diag_vertex() const;
-    std::vector<full_diag_vertex_type> fluctuation_diagnostics(std::vector<bz_point> kpoints, bool self_check = false) const;
+    /// Return the fluctuation diagnostics (Q-dependent contributions to 1) dual and 2) lattice self-energy) for a given set of points in the Brilloin zone
+    std::tuple<std::vector<full_diag_vertex_type>, std::vector<full_diag_vertex_type>> fluctuation_diagnostics(std::vector<bz_point> kpoints, bool self_check = false) const;
 
 protected:
     disp_type get_susc_(vertex_type const& in, bmatsubara_grid::point W, double norm) const;

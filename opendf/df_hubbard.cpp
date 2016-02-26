@@ -308,11 +308,14 @@ typename df_hubbard<LatticeT>::full_diag_vertex_type const& df_hubbard<LatticeT>
 }
 
 template <typename LatticeT>
-std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<LatticeT>::fluctuation_diagnostics(std::vector<bz_point> kpoints, bool self_check) const
+std::tuple<std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type>, std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type>> 
+   df_hubbard<LatticeT>::fluctuation_diagnostics(std::vector<bz_point> kpoints, bool self_check) const
 {
     full_diag_vertex_type const& full_diag_vertex = this->full_diag_vertex();
 
-    std::vector<full_diag_vertex_type> out ( kpoints.size(), full_diag_vertex * 0 );
+    std::vector<full_diag_vertex_type> out_sigma_d ( kpoints.size(), full_diag_vertex * 0 );
+    std::vector<full_diag_vertex_type> out_sigma_lat ( kpoints.size(), full_diag_vertex * 0 );
+
     bmatsubara_grid const& bgrid = std::get<0>(full_diag_vertex.grids());
 
     gk_type gd_shift(gd_.grids());
@@ -322,9 +325,10 @@ std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<Lat
     //const auto unique_kpts = lattice_t::getUniqueBZPoints(kgrid_);
     const auto all_kpts = lattice_t::getAllBZPoints(kgrid_);
     double knorm = all_kpts.size();
-    std::cout << "knorm = " << knorm << std::endl;
     double beta = fgrid_.beta();
     double T = 1.0/beta;
+
+    if (!kpoints.size()) { std::cerr << "No points for fluctuation diagnostics" << std::endl; return std::forward_as_tuple(out_sigma_d, out_sigma_lat); }
 
     for (typename bmatsubara_grid::point W : bgrid.points()) { 
         //gk_type dual_bubbles = diagram_traits::calc_bubbles(gd_, W); 
@@ -350,7 +354,7 @@ std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<Lat
                 for (int k_ = 0; k_ < kpoints.size(); ++k_) { 
                     bz_point k = kpoints[k_];
                     auto wk = std::tuple_cat(std::make_tuple(iw), k);
-                    out[k_](WwQ) = sigma_contrib(wk);
+                    out_sigma_d[k_](WwQ) = sigma_contrib(wk);
                     }
 
              }
@@ -376,7 +380,7 @@ std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<Lat
         std::cout << "diff between fft and direct = " << check_diff << std::endl;
         if (!gftools::tools::is_float_equal(check_diff, 0, 1e-8)) throw std::logic_error("Problem with the fluctuation diagnostics : the self-energy does not match the calculated value");
         }
-    return out;
+    return std::forward_as_tuple(out_sigma_d, out_sigma_lat);
 }
 
 
