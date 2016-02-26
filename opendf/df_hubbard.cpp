@@ -320,6 +320,7 @@ std::tuple<std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type>, st
 
     gk_type gd_shift(gd_.grids());
     gk_type sigma_contrib(gd_.grids());
+    gk_type sigma_lat_contrib(gd_.grids());
     gk_type sigma_check(gd_.grids()); sigma_check = 0;
     gk_type sigma_d2(gd_.grids()); sigma_d2 = 0;
     //const auto unique_kpts = lattice_t::getUniqueBZPoints(kgrid_);
@@ -350,11 +351,22 @@ std::tuple<std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type>, st
                 auto WwQ = std::tuple_cat(std::make_tuple(W), std::make_tuple(iw), q);
                 std::complex<double> vert_val = full_diag_vertex(WwQ);
                 sigma_contrib[iw] = T * vert_val * gd_shift[iw] / knorm;
+                // crude, may have to fix it
+                sigma_lat_contrib[iw] = sigma_contrib[iw] / ( sigma_d_[iw] * gw_[iw] + 1.0); 
                 
                 for (int k_ = 0; k_ < kpoints.size(); ++k_) { 
                     bz_point k = kpoints[k_];
                     auto wk = std::tuple_cat(std::make_tuple(iw), k);
                     out_sigma_d[k_](WwQ) = sigma_contrib(wk);
+
+                    // Fluctuation diagnostics for lattice sigma is more involved, as 
+                    // Sigma_{lat} - Sigma^{DMFT} = \sum_q \Sigma_q / ( 1 - g * \sum_q \Sigma_q)
+                    // so independent components for q can not be straightforwardly obtained 
+                    // so we rewrite this as 
+                    // \Sigma' = \Sigma_q + \sum_q Sigma_q * g * \Sigma_q 
+                    // for now just stick to \Sigma_q / (1 + \Sigma g)
+
+                    out_sigma_lat[k_](WwQ) = sigma_lat_contrib(wk); 
                     }
 
              }
