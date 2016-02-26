@@ -152,11 +152,11 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                         };
                     };
                 std::cout << std::endl;
-                if (store_full_diag_vertex) { 
-                    (*full_diag_vertex_ptr_)[W] = full_vertex.data();
-                    }
                 } // end bz loop
 
+            if (store_full_diag_vertex) { 
+                (*full_diag_vertex_ptr_)[W] = full_vertex.data();
+                }
             std::cout << "Updating sigma" << std::endl;
             for (auto iw1 : fgrid_.points()) {
                 auto v4r = run_fft(full_vertex[iw1], FFTW_FORWARD)/knorm;
@@ -164,7 +164,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 // in chosen notation - a.k.a horizontal ladder with (-0.25 \gamma^4 f^+ f f^+ f ) the sign in +
                 sigma_d_[iw1]+= (1.0*T)*run_fft(v4r*gdr, FFTW_FORWARD); 
                 };
-            std::cout << "After W = " << W << " sigma diff = " << sigma_d_.diff(sigma_d_ * 0) << std::endl;
+            //std::cout << "After W = " << W << " sigma diff = " << sigma_d_.diff(sigma_d_ * 0) << std::endl;
 
             } // end bgrid loop
 
@@ -308,7 +308,7 @@ typename df_hubbard<LatticeT>::full_diag_vertex_type const& df_hubbard<LatticeT>
 }
 
 template <typename LatticeT>
-std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<LatticeT>::fluctuation_diagnostics(std::vector<bz_point> kpoints) const
+std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<LatticeT>::fluctuation_diagnostics(std::vector<bz_point> kpoints, bool self_check) const
 {
     full_diag_vertex_type const& full_diag_vertex = this->full_diag_vertex();
 
@@ -318,6 +318,7 @@ std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<Lat
     gk_type gd_shift(gd_.grids());
     gk_type sigma_contrib(gd_.grids());
     gk_type sigma_check(gd_.grids()); sigma_check = 0;
+    gk_type sigma_d2(gd_.grids()); sigma_d2 = 0;
     //const auto unique_kpts = lattice_t::getUniqueBZPoints(kgrid_);
     const auto all_kpts = lattice_t::getAllBZPoints(kgrid_);
     double knorm = all_kpts.size();
@@ -338,7 +339,7 @@ std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<Lat
             std::cout << tuple_tools::print_tuple(Wq_args_print) << "]. Weight : " << 1 << ". " << std::endl;
             
             // T * V(Omega, q, omega, omega) * G(omega + Omega, k + q) 
-            gd_shift = gd_.shift(Wq_args);
+            gd_shift = gd_.shift(Wq_args_print);
             //std::cout << full_diag_vertex[W].diff(full_diag_vertex[W]*0) << std::endl;
 
             for (auto iw : fgrid_.points()) { 
@@ -351,11 +352,30 @@ std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<Lat
                     auto wk = std::tuple_cat(std::make_tuple(iw), k);
                     out[k_](WwQ) = sigma_contrib(wk);
                     }
+
              }
             sigma_check += sigma_contrib;
         }
+
+        if (self_check) { 
+            std::array<double, NDim> q1; q1.fill(0.0);
+            typename gk_type::arg_tuple W_shift = std::tuple_cat(std::make_tuple(W.value()),q1);
+            gk_type gd_shift1 = gd_.shift(W_shift);
+            for (auto iw1 : fgrid_.points()) {
+                auto v4r = run_fft(full_diag_vertex[W][iw1.index()], FFTW_FORWARD)/knorm;
+                auto gdr = run_fft(gd_shift1[iw1], FFTW_BACKWARD);
+                // in chosen notation - a.k.a horizontal ladder with (-0.25 \gamma^4 f^+ f f^+ f ) the sign in +
+                sigma_d2[iw1]+= (1.0*T)*run_fft(v4r*gdr, FFTW_FORWARD); 
+                };
+        }
     }
-    std::cout << "dual sigma diff = " << sigma_check.diff(sigma_d_);
+    std::cout << "dual sigma diff = " << sigma_check.diff(sigma_d_) << std::endl;
+    if (self_check) { 
+        std::cout << "dual sigma check diff2 = " << sigma_d2.diff(sigma_d_) << std::endl;
+        double check_diff = sigma_check.diff(sigma_d2);
+        std::cout << "diff between fft and direct = " << check_diff << std::endl;
+        if (!gftools::tools::is_float_equal(check_diff, 0, 1e-8)) throw std::logic_error("Problem with the fluctuation diagnostics : the self-energy does not match the calculated value");
+        }
     return out;
 }
 

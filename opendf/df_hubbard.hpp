@@ -45,7 +45,7 @@ public:
 
     void calc_full_diag_vertex(alps::params p); // std::vector<bz_point> kpoints); 
     full_diag_vertex_type const& full_diag_vertex() const;
-    std::vector<full_diag_vertex_type> fluctuation_diagnostics(std::vector<bz_point> kpoints) const;
+    std::vector<full_diag_vertex_type> fluctuation_diagnostics(std::vector<bz_point> kpoints, bool self_check = false) const;
 
 protected:
     disp_type get_susc_(vertex_type const& in, bmatsubara_grid::point W, double norm) const;
