@@ -105,8 +105,30 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
         susc_r.data() = run_fft(charge_susc.data(), FFTW_BACKWARD);
         save_grid_object(ar, top + "/charge_susc_W" + std::to_string(W0.value().imag())+"_r", susc_r, plaintext > 0); 
     }
+    
+    // fluctuation diagnostics
     if (p["fluct_diag"].as<bool>()) { 
-        std::vector<typename SCType::bz_point> fluct_pts;
+        typedef typename SCType::bz_point bz_point;
+        typedef std::array<double, D> bz_point_val;
+        // do pi,0 and pi/2 pi/2
+        kmesh::point k_pi = kgrid.find_nearest(M_PI);
+        kmesh::point k_pi_half = kgrid.find_nearest(M_PI/2);
+        kmesh::point k_zero = kgrid.find_nearest(0);
+
+        std::vector<bz_point> fluct_pts;
+
+        fluct_pts.reserve(2);
+        // add pi/2 pi/2
+        bz_point p1 = gftools::tuple_tools::repeater<kmesh::point, D>::get_array(k_pi_half);
+        fluct_pts.push_back(p1); 
+        // add pi, 0
+        p1.fill(k_zero);
+        p1[0] = k_pi;
+        fluct_pts.push_back(p1); 
+
+        std::cout << "Fluctuation diagnostics points: " << std::endl;
+        for (bz_point k : fluct_pts) std::cout << "--> " <<  gftools::tuple_tools::print_array(k) << std::endl;
+
         save_grid_object(ar, top + "/full_diag_vertex", sc.full_diag_vertex(), plaintext > 3); 
         auto fluct_data = sc.fluctuation_diagnostics(fluct_pts, true);
     }
