@@ -20,6 +20,8 @@ public:
     using base::NDim;
     using typename base::vertex_eval_type;
     typedef diagrams::BetheSalpeter<matrix_type, true> forward_bs;
+    // storage for the full equal-fermionic freq vertex, a.k.a w, w+W, w+W, w
+    typedef typename diagram_traits::full_diag_vertex_type full_diag_vertex_type;
 
     /// Constructor
     df_hubbard(gw_type gw, gw_type Delta, lattice_t lattice, kmesh kgrid, vertex_type d_vertex, vertex_type m_vertex):
@@ -42,7 +44,8 @@ public:
     bmatsubara_grid const& bgrid() const { return std::get<0>(magnetic_vertex_.grids()); }
 
     void calc_full_diag_vertex(alps::params p); // std::vector<bz_point> kpoints); 
-    void fluctuation_diagnostics(std::vector<bz_point> kpoints) const;
+    full_diag_vertex_type const& full_diag_vertex() const;
+    std::vector<full_diag_vertex_type> fluctuation_diagnostics(std::vector<bz_point> kpoints) const;
 
 protected:
     disp_type get_susc_(vertex_type const& in, bmatsubara_grid::point W, double norm) const;

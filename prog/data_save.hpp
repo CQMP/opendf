@@ -105,12 +105,11 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
         susc_r.data() = run_fft(charge_susc.data(), FFTW_BACKWARD);
         save_grid_object(ar, top + "/charge_susc_W" + std::to_string(W0.value().imag())+"_r", susc_r, plaintext > 0); 
     }
-/*
     if (p["fluct_diag"].as<bool>()) { 
         std::vector<typename SCType::bz_point> fluct_pts;
-        sc.fluctuation_diagnostics(p, fluct_pts);
+        save_grid_object(ar, top + "/full_diag_vertex", sc.full_diag_vertex(), plaintext > 3); 
+        //sc.fluctuation_diagnostics(p, fluct_pts);
     }
-*/
 
 /*
     if (plaintext > 0) { 

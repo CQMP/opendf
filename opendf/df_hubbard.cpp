@@ -298,8 +298,16 @@ void df_hubbard<LatticeT>::calc_full_diag_vertex(alps::params p) //, std::vector
 }
 
 template <typename LatticeT>
-void df_hubbard<LatticeT>::fluctuation_diagnostics(std::vector<bz_point> kpoints) const
+typename df_hubbard<LatticeT>::full_diag_vertex_type const& df_hubbard<LatticeT>::full_diag_vertex() const
 {
+    if (!full_diag_vertex_ptr_) throw std::logic_error("No full diag vertex stored -> run calc_full_diag_vertex first");
+    return *full_diag_vertex_ptr_; 
+}
+
+template <typename LatticeT>
+std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<LatticeT>::fluctuation_diagnostics(std::vector<bz_point> kpoints) const
+{
+    full_diag_vertex_type const& full_diag_vertex = this->full_diag_vertex();
 }
 
 
