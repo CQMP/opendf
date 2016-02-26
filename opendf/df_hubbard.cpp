@@ -19,6 +19,7 @@ alps::params& df_hubbard<LatticeT>::define_parameters(alps::params& p)
      .define<bool>("eval_bs_sc", 0, "evaluate Bethe-Salpeter equation self-consistently");
     
     p["store_full_diag_vertex"] = false;
+    p["diff_stream"] = "diffDF.dat";
 
     return p;
 }
@@ -70,7 +71,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     }
 
     // stream convergence
-    std::ofstream diffDF_stream("diffDF.dat",std::ios::out);
+    std::ofstream diffDF_stream(p["diff_stream"].as<std::string>(),std::ios::out);
     diffDF_stream.close();
     double diff_gd = 1.0, diff_gd_min = diff_gd;
     int diff_gd_min_count = 0;
@@ -184,7 +185,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
             diff_gd_min_count = 0;
             }
 
-        diffDF_stream.open("diffDF.dat",std::ios::app);
+        diffDF_stream.open(p["diff_stream"].as<std::string>(),std::ios::app);
         diffDF_stream << diff_gd << "  " << df_sc_mix << " " << min_det << std::endl;
         diffDF_stream.close();
 
@@ -293,6 +294,7 @@ void df_hubbard<LatticeT>::calc_full_diag_vertex(alps::params p) //, std::vector
     p["store_full_diag_vertex"] = true;
     p["df_sc_mix"] = 0;
     p["df_sc_iter"] = 1;
+    p["diff_stream"] = "diff_full_vertex.dat";
     // rerun self-consistency and get the full vertex for diagnostics
     this->operator()(p);
 }
