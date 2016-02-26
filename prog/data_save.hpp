@@ -117,6 +117,7 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
 
         std::vector<bz_point> fluct_pts;
 
+        // add here points for fluctuation diagnostics
         fluct_pts.reserve(2);
         // add pi/2 pi/2
         bz_point p1 = gftools::tuple_tools::repeater<kmesh::point, D>::get_array(k_pi_half);
@@ -126,11 +127,24 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
         p1[0] = k_pi;
         fluct_pts.push_back(p1); 
 
-        std::cout << "Fluctuation diagnostics points: " << std::endl;
-        for (bz_point k : fluct_pts) std::cout << "--> " <<  gftools::tuple_tools::print_array(k) << std::endl;
+        //std::cout << "Fluctuation diagnostics points: " << std::endl;
+        //for (bz_point k : fluct_pts) std::cout << "--> " <<  gftools::tuple_tools::print_array(k) << std::endl;
 
-        save_grid_object(ar, top + "/full_diag_vertex", sc.full_diag_vertex(), plaintext > 3); 
+        save_grid_object(ar, top + "/fluct_diag/full_diag_dual_vertex", sc.full_diag_vertex(), plaintext > 3); 
         auto fluct_data = sc.fluctuation_diagnostics(fluct_pts, true);
+
+        auto& sigma_d_diagnostics = std::get<0>(fluct_data);
+        auto& sigma_lat_diagnostics = std::get<1>(fluct_data);
+
+        for (int k_ = 0; k_ < fluct_pts.size(); ++k_) { 
+            bz_point k = fluct_pts[k_];
+            typename SCType::disp_type::arg_tuple k1 = k;
+            std::string postfix = gftools::tuple_tools::print_tuple(k1);
+            std::replace(postfix.begin(),postfix.end(), ' ', '_');
+            std::cout << "--> " << postfix << std::endl;
+            save_grid_object(ar, top + "/fluct_diag/sigma_d_" + postfix, sigma_d_diagnostics[k_], plaintext > 3);
+            save_grid_object(ar, top + "/fluct_diag/sigma_lat_" + postfix, sigma_lat_diagnostics[k_], plaintext > 3);
+        }
     }
 
 /*
