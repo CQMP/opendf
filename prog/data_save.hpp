@@ -108,7 +108,7 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
     if (p["fluct_diag"].as<bool>()) { 
         std::vector<typename SCType::bz_point> fluct_pts;
         save_grid_object(ar, top + "/full_diag_vertex", sc.full_diag_vertex(), plaintext > 3); 
-        //sc.fluctuation_diagnostics(p, fluct_pts);
+        auto fluct_data = sc.fluctuation_diagnostics(fluct_pts);
     }
 
 /*

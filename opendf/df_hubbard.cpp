@@ -68,6 +68,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     typedef typename diagram_traits::full_diag_vertex_type full_diag_vertex_t; 
     if (store_full_diag_vertex) { 
         full_diag_vertex_ptr_.reset(new full_diag_vertex_t(std::tuple_cat(std::make_tuple(bgrid), gd0_.grids()))); 
+        *full_diag_vertex_ptr_ = 0;
     }
 
     // stream convergence
@@ -310,6 +311,52 @@ template <typename LatticeT>
 std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type> df_hubbard<LatticeT>::fluctuation_diagnostics(std::vector<bz_point> kpoints) const
 {
     full_diag_vertex_type const& full_diag_vertex = this->full_diag_vertex();
+
+    std::vector<full_diag_vertex_type> out ( kpoints.size(), full_diag_vertex * 0 );
+    bmatsubara_grid const& bgrid = std::get<0>(full_diag_vertex.grids());
+
+    gk_type gd_shift(gd_.grids());
+    gk_type sigma_contrib(gd_.grids());
+    gk_type sigma_check(gd_.grids()); sigma_check = 0;
+    //const auto unique_kpts = lattice_t::getUniqueBZPoints(kgrid_);
+    const auto all_kpts = lattice_t::getAllBZPoints(kgrid_);
+    double knorm = all_kpts.size();
+    std::cout << "knorm = " << knorm << std::endl;
+    double beta = fgrid_.beta();
+    double T = 1.0/beta;
+
+    for (typename bmatsubara_grid::point W : bgrid.points()) { 
+        //gk_type dual_bubbles = diagram_traits::calc_bubbles(gd_, W); 
+        std::cout << "W (bosonic) = " << W << std::endl;
+        size_t nq = 1;
+        if (full_diag_vertex[W].diff(full_diag_vertex[W]*0) == 0 ) continue;
+        for (auto pts_it = all_kpts.begin(); pts_it != all_kpts.end(); pts_it++) { 
+            std::array<kmesh::point, NDim> q = *pts_it;//->first; // point
+            std::cout << nq++ << "/" << all_kpts.size() << ": [" << std::flush;
+            typename gk_type::point_tuple Wq_args = std::tuple_cat(std::make_tuple(W),q);
+            typename gk_type::arg_tuple Wq_args_print = std::tuple_cat(std::make_tuple(W),q);
+            std::cout << tuple_tools::print_tuple(Wq_args_print) << "]. Weight : " << 1 << ". " << std::endl;
+            
+            // T * V(Omega, q, omega, omega) * G(omega + Omega, k + q) 
+            gd_shift = gd_.shift(Wq_args);
+            //std::cout << full_diag_vertex[W].diff(full_diag_vertex[W]*0) << std::endl;
+
+            for (auto iw : fgrid_.points()) { 
+                auto WwQ = std::tuple_cat(std::make_tuple(W), std::make_tuple(iw), q);
+                std::complex<double> vert_val = full_diag_vertex(WwQ);
+                sigma_contrib[iw] = T * vert_val * gd_shift[iw] / knorm;
+                
+                for (int k_ = 0; k_ < kpoints.size(); ++k_) { 
+                    bz_point k = kpoints[k_];
+                    auto wk = std::tuple_cat(std::make_tuple(iw), k);
+                    out[k_](WwQ) = sigma_contrib(wk);
+                    }
+             }
+            sigma_check += sigma_contrib;
+        }
+    }
+    std::cout << "dual sigma diff = " << sigma_check.diff(sigma_d_);
+    return out;
 }
 
 
