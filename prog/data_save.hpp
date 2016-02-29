@@ -138,7 +138,7 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
 
         for (int k_ = 0; k_ < fluct_pts.size(); ++k_) { 
             bz_point k = fluct_pts[k_];
-            typename SCType::disp_type::arg_tuple k1 = k;
+            typename SCType::disp_type::arg_tuple k1 = std::tuple_cat(k);
             std::string postfix = gftools::tuple_tools::print_tuple(k1);
             std::replace(postfix.begin(),postfix.end(), ' ', '_');
             std::cout << "--> " << postfix << std::endl;
