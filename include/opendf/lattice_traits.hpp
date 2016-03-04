@@ -43,6 +43,7 @@ struct lattice_traits_base {
 
 };
     
+/// Hypercubic lattice in arbitrary dimensions
 template <size_t D> 
 struct cubic_traits : lattice_traits_base<D,cubic_traits<D>>{ 
     real_type _t = 1.0;
@@ -65,6 +66,7 @@ struct cubic_traits<0>{
     real_type dispersion(std::tuple<>){return 0.0;};
 };
 
+/// Triangular lattice
 struct triangular_traits : lattice_traits_base<2,triangular_traits> {
     real_type _t = 1.0;
     real_type _tp = 1.0;
@@ -75,6 +77,27 @@ struct triangular_traits : lattice_traits_base<2,triangular_traits> {
     static BZPoint<2> findSymmetricBZPoint(const BZPoint<2>& in, const kmesh& kGrid);
     };
 
+
+/// Square lattice with a nearest neighbor interaction
+struct square_nnn_traits : lattice_traits_base<2,square_nnn_traits> {
+    real_type _t = 1.0;
+    real_type _tp = 1.0;
+    square_nnn_traits(real_type t, real_type tp):_t(t),_tp(tp){};
+
+    real_type dispersion(real_type kx,real_type ky){return -2.*_t*(cos(kx)+cos(ky)) - 4.*_tp*cos(kx)*cos(ky);};
+    real_type disp_square_sum(){return 4.*_t*_t + 1.*_tp*_tp;}; 
+    static BZPoint<2> findSymmetricBZPoint(const BZPoint<2>& in, const kmesh& kGrid);
+    };
+
+
+/// A macro to instantiate objects depending on lattices
+#define OPENDF_INSTANTIATE_LATTICE_OBJECT(OBJ1) \
+    template class OBJ1<cubic_traits<1>>; \
+    template class OBJ1<cubic_traits<2>>; \
+    template class OBJ1<cubic_traits<3>>; \
+    template class OBJ1<cubic_traits<4>>; \
+    template class OBJ1<triangular_traits>; \
+    template class OBJ1<square_nnn_traits>;
 
 //
 // cubic_traits
@@ -97,12 +120,30 @@ inline BZPoint<D> cubic_traits<D>::findSymmetricBZPoint(const BZPoint<D>& in, co
 inline BZPoint<2> triangular_traits::findSymmetricBZPoint(const BZPoint<2>& in, const kmesh& kGrid)
 {
     real_type x = in[0]; real_type y = in[1];
+    // kx -> 2pi - kx AND ky -> 2pi - ky leave the dispersion unchanged
     if (x>PI && y>PI) { x = 2.0*PI-x; y = 2.0*PI-y; };
     BZPoint<2> out(in); 
     out[0] = kGrid.find_nearest(x); out[1] = kGrid.find_nearest(y);
     std::sort(out.begin(), out.end());
     return out;
 }
+
+//
+// square_nnn_traits
+//
+inline BZPoint<2> square_nnn_traits::findSymmetricBZPoint(const BZPoint<2>& in, const kmesh& kGrid)
+{
+    real_type x = in[0]; real_type y = in[1];
+    // kx -> 2pi - kx leaves the dispersion unchanged
+    if (x>PI) { x = 2.0*PI-x; };
+    // ky -> 2pi - ky leaves the dispersion unchanged
+    if (y>PI) { y = 2.0*PI-y; };
+    BZPoint<2> out(in); 
+    out[0] = kGrid.find_nearest(x); out[1] = kGrid.find_nearest(y);
+    std::sort(out.begin(), out.end());
+    return out;
+}
+
 
 
 //

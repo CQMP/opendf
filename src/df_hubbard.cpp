@@ -395,10 +395,6 @@ std::tuple<std::vector<typename df_hubbard<LatticeT>::full_diag_vertex_type>, st
     return std::forward_as_tuple(out_sigma_d, out_sigma_lat);
 }
 
-
-template class df_hubbard<cubic_traits<1>>;
-template class df_hubbard<cubic_traits<2>>;
-template class df_hubbard<cubic_traits<3>>;
-template class df_hubbard<cubic_traits<4>>;
+OPENDF_INSTANTIATE_LATTICE_OBJECT(df_hubbard);
 
 } // end of namespace open_df

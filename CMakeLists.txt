@@ -50,7 +50,7 @@ include_directories(
 ### configure and build everything 
 # Check which lattices should be built
 # List of all known lattices
-list(APPEND known_lattices cubic1d cubic2d cubic3d cubic4d)
+list(APPEND known_lattices cubic1d cubic2d cubic3d cubic4d triangular square_nnn)
 # List of lattices, compiled by default
 list(APPEND default_lattices cubic2d cubic3d)
 # if no lattices specified - build all 

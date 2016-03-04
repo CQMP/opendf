@@ -18,15 +18,27 @@
 #ifdef LATTICE_cubic1d
     static constexpr int D = 1; 
     typedef open_df::cubic_traits<D> lattice_t; 
+    #define LATTICE_PARAMS 1
 #elif LATTICE_cubic2d
     static constexpr int D = 2; 
     typedef open_df::cubic_traits<D> lattice_t; 
+    #define LATTICE_PARAMS 1
 #elif LATTICE_cubic3d
     static constexpr int D = 3; 
     typedef open_df::cubic_traits<D> lattice_t; 
+    #define LATTICE_PARAMS 1
 #elif LATTICE_cubic4d
     static constexpr int D = 4; 
     typedef open_df::cubic_traits<D> lattice_t; 
+    #define LATTICE_PARAMS 1
+#elif LATTICE_triangular
+    static constexpr int D = 2; 
+    typedef open_df::triangular_traits lattice_t; 
+    #define LATTICE_PARAMS 2
+#elif LATTICE_square_nnn
+    static constexpr int D = 2; 
+    typedef open_df::square_nnn_traits lattice_t; 
+    #define LATTICE_PARAMS 2
 #else 
 #error Undefined lattice
 #endif
@@ -89,7 +101,6 @@ void run(alps::params p)
 
 
     // parameters
-    double hopping_t = p["hopping"];
     double beta = gw.grid().beta();
     double T = 1.0/beta;
     int kpts = p["kpts"];
@@ -104,7 +115,11 @@ void run(alps::params p)
     kmesh kgrid(kpts);
     
     // define lattice
-    lattice_t lattice(hopping_t);
+    #if LATTICE_PARAMS==1
+    lattice_t lattice(p["t"].as<double>());
+    #elif LATTICE_PARAMS==2
+    lattice_t lattice(p["t"], p["tp"]);
+    #endif
     // get dispersion
     disp_type disp(gftools::tuple_tools::repeater<kmesh, D>::get_tuple(kgrid));
     disp.fill(lattice.get_dispersion());  
@@ -206,13 +221,22 @@ alps::params cmdline_params(int argc, char* argv[])
     df_type::define_parameters(p);
     save_define_parameters(p);
 
-    p.define<double>("hopping",      1.0,   "hopping on a lattice")
+    p
      .define<double>("mu",           0.0,   "chemical potential")
      .define<int>("kpts",           16,     "number of points on a single axis in Brilloin zone")
      .define<std::string>("input",          "output.h5", "input file with vertices and gf")
      .define<std::string>("inp_section",    "dmft",      "input section (default : 'dmft')")
      .define<std::string>("output",         "output.h5", "output file")
      .define<bool>("resume", 0, "try resuming calculation - load dual gf from 'output' hdf5 file : /df/gd section");
+
+    #if LATTICE_PARAMS == 1
+    p.define<double>("t",  1.0,   "hopping on a lattice");
+    #elif LATTICE_PARAMS == 2
+    p.define<double>("t",  1.0,   "nearest neighbor hopping on a lattice");
+    p.define<double>("tp", 0.0,   "next-nearest neighbor hopping on a lattice");
+    #else
+    #error Undefined lattice
+    #endif
 
     if (p.help_requested(std::cerr)) { exit(1); };
 
