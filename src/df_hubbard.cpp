@@ -1,6 +1,6 @@
-#include "df_hubbard.hpp"
-#include "diagrams.hpp"
-#include "lattice_traits.hpp"
+#include "opendf/df_hubbard.hpp"
+#include "opendf/diagrams.hpp"
+#include "opendf/lattice_traits.hpp"
 
 namespace open_df { 
 

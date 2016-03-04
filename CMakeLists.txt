@@ -76,9 +76,13 @@ message(STATUS "Lattices : ${df_lattices}")
 mark_as_advanced(${df_lattices})
 set (DF_LATTICES ${df_lattices} CACHE STRING "Lattices for DF calculation" FORCE)
 
+# configure header
+configure_file(${CMAKE_SOURCE_DIR}/include/opendf/config.hpp.in ${CMAKE_BINARY_DIR}/include/opendf/config.hpp)
+include_directories(${CMAKE_SOURCE_DIR}/include/ ${CMAKE_BINARY_DIR}/include/)
+
 # build library
 set (opendf_name opendf${DF_POSTFIX})
-add_subdirectory(opendf)
+add_subdirectory(src)
 # build executables
 option(Execs "Enable executables" ON)
 if (Execs)
@@ -93,6 +97,11 @@ if (Testing)
 endif (Testing)
 # build misc tools - converters, etc
 add_subdirectory(tools)
+
+# install headers
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include DESTINATION include FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY ${CMAKE_BINARY_DIR}/include DESTINATION include FILES_MATCHING PATTERN "*.hpp")
+
 
 ### Additional installation files
 configure_file("${CMAKE_SOURCE_DIR}/opendf.lmod.in" "${CMAKE_BINARY_DIR}/opendf.lmod")

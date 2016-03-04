@@ -1,4 +1,4 @@
-#include "diagrams.hpp"
+#include "opendf/diagrams.hpp"
 
 #include <Eigen/LU>
 #include <Eigen/Dense>
