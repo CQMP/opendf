@@ -46,9 +46,11 @@ struct lattice_traits_base {
 /// Hypercubic lattice in arbitrary dimensions
 template <size_t D> 
 struct cubic_traits : lattice_traits_base<D,cubic_traits<D>>{ 
+    typedef lattice_traits_base<D,cubic_traits<D>> base;
     real_type _t = 1.0;
     cubic_traits(real_type t):_t(t){};
     static BZPoint<D> findSymmetricBZPoint(const BZPoint<D>& in, const kmesh& kGrid);
+    real_type dispersion(typename base::arg_tuple x) { return base::dispersion(x); }
     template <typename Arg1, typename ...Args> 
         typename std::enable_if<sizeof...(Args) == D-1 && std::is_convertible<Arg1,real_type>::value, real_type>::type 
         dispersion(Arg1 in1, Args... in) {
@@ -68,11 +70,13 @@ struct cubic_traits<0>{
 
 /// Triangular lattice
 struct triangular_traits : lattice_traits_base<2,triangular_traits> {
+    typedef lattice_traits_base<2,triangular_traits> base;
     real_type _t = 1.0;
     real_type _tp = 1.0;
     triangular_traits(real_type t, real_type tp):_t(t),_tp(tp){};
 
     real_type dispersion(real_type kx,real_type ky){return -2.*_t*(cos(kx)+cos(ky)) - 2.*_tp*cos(kx-ky);};
+    real_type dispersion(typename base::arg_tuple x) { return base::dispersion(x); }
     real_type disp_square_sum(){return 4.*_t*_t + 2.*_tp*_tp;}; 
     static BZPoint<2> findSymmetricBZPoint(const BZPoint<2>& in, const kmesh& kGrid);
     };
@@ -80,12 +84,14 @@ struct triangular_traits : lattice_traits_base<2,triangular_traits> {
 
 /// Square lattice with a nearest neighbor interaction
 struct square_nnn_traits : lattice_traits_base<2,square_nnn_traits> {
+    typedef lattice_traits_base<2,square_nnn_traits> base;
     real_type _t = 1.0;
     real_type _tp = 1.0;
     square_nnn_traits(real_type t, real_type tp):_t(t),_tp(tp){};
 
     real_type dispersion(real_type kx,real_type ky){return -2.*_t*(cos(kx)+cos(ky)) - 4.*_tp*cos(kx)*cos(ky);};
-    real_type disp_square_sum(){return 4.*_t*_t + 1.*_tp*_tp;}; 
+    real_type dispersion(typename base::arg_tuple x) { return base::dispersion(x); }
+    real_type disp_square_sum(){return 4.*_t*_t + 4.*_tp*_tp;}; 
     static BZPoint<2> findSymmetricBZPoint(const BZPoint<2>& in, const kmesh& kGrid);
     };
 
