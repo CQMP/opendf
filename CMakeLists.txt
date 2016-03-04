@@ -52,7 +52,7 @@ include_directories(
 # List of all known lattices
 list(APPEND known_lattices cubic1d cubic2d cubic3d cubic4d triangular square_nnn)
 # List of lattices, compiled by default
-list(APPEND default_lattices cubic2d cubic3d)
+list(APPEND default_lattices ${known_lattices})
 # if no lattices specified - build all 
 list(LENGTH DF_LATTICES comp_len)
 if (${comp_len} EQUAL 0) 
