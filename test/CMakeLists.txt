@@ -4,6 +4,7 @@ include(EnableGtests) #defined in common/cmake
 
 set (tests
     atomic_limit_test
+    lattice_test
  )
 
 foreach (test ${tests})
