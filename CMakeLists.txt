@@ -7,8 +7,8 @@ cmake_minimum_required (VERSION 2.8)
 project (opendf CXX)
 message ("\n${PROJECT_NAME} configuration\n")
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake) # find additional cmake module in cmake dir
-# check ./cmake/opendfCommondModuleDefinitions.cmake for all of the macro/functions below
-include(opendfCommonModuleDefinitions)
+# check ./cmake/CommondDefs.cmake for all of the macro/functions below
+include(CommonDefs)
 
 # Disable build in source
 no_source_builds()
