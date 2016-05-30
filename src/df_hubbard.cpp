@@ -63,7 +63,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     gk_type full_vertex(gd0_.grids());
     matrix_type full_m(fgrid_.size(), fgrid_.size()), full_d(full_m), full_m2(full_m), full_d2(full_d);
     double min_det = 1;
-    container<std::complex<double>, NDim> v4r, gdr;
+    container<std::complex<double>, NDim> v4r(disp_.data()), gdr(disp_.data());
 
     // full vertex cache
     typedef typename diagram_traits::full_diag_vertex_type full_diag_vertex_t; 
@@ -160,8 +160,8 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 }
             std::cout << "Updating sigma" << std::endl;
             for (auto iw1 : fgrid_.points()) {
-                auto v4r = run_fft(full_vertex[iw1], FFTW_FORWARD)/knorm;
-                auto gdr = run_fft(gd_shift[iw1], FFTW_BACKWARD);
+                v4r = run_fft(full_vertex[iw1], FFTW_FORWARD)/knorm;
+                gdr = run_fft(gd_shift[iw1], FFTW_BACKWARD);
                 // in chosen notation - a.k.a horizontal ladder with (-0.25 \gamma^4 f^+ f f^+ f ) the sign in +
                 sigma_d_[iw1]+= (1.0*T)*run_fft(v4r*gdr, FFTW_FORWARD); 
                 };

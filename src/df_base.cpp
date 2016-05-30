@@ -47,7 +47,7 @@ typename df_base<LatticeT>::gk_type df_base<LatticeT>::glat_dmft() const
         glat_dmft[w] = 1.0 / ( 1.0 / gw_[w] + delta_[w] - disp_.data());  
         //if (!is_float_equal(glat_dmft[w].sum()/pow<D>(kpts), gw[w], 1e-3)) ERROR(glat_dmft[w].sum()/pow<D>(kpts) << " != " << gw[w]);
         if (!is_float_equal(glat_dmft[w].sum()/pow<NDim>(kgrid_.size()), gw_[w], 1e-3)) { 
-            std::cerr << "Warning : the sum of input G(w,k) is not equal to input g(w), diff = " 
+            std::cerr << "Warning : the sum of input G(w,k) is not equal to input g(w), w = " << w << "; diff = " 
                       << std::abs(glat_dmft[w].sum()/pow<NDim>(kgrid_.size()) - gw_[w]) << std::endl;
             }
         }
