@@ -237,6 +237,9 @@ alps::params cmdline_params(int argc, char* argv[])
     #else
     #error Undefined lattice
     #endif
+    #ifndef NDEBUG 
+    p.define<int>("verbosity", 0, "degugging verbosity");
+    #endif
 
     if (p.help_requested(std::cerr)) { exit(1); };
 

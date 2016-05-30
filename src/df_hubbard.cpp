@@ -63,6 +63,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     gk_type full_vertex(gd0_.grids());
     matrix_type full_m(fgrid_.size(), fgrid_.size()), full_d(full_m), full_m2(full_m), full_d2(full_d);
     double min_det = 1;
+    container<std::complex<double>, NDim> v4r, gdr;
 
     // full vertex cache
     typedef typename diagram_traits::full_diag_vertex_type full_diag_vertex_t; 
