@@ -31,7 +31,14 @@ struct lattice_traits_base {
              return tuple_tools::unfold_tuple(f,in);
         };
 
-    real_type dispersion(bz_point x) { arg_tuple y = tuple_tools::array_to_tuple(x); return this->dispersion(y); }
+    real_type dispersion(bz_point x) { 
+        #if defined(BOLD_HYB_GNU_BUGFIX) || defined(BOLD_HYB_INTEL_BUGFIX)
+        arg_tuple y = tuple_tools::array_to_tuple(x); 
+        return this->dispersion(y); 
+        #else 
+        return this->dispersion(static_cast<arg_tuple>(x)); 
+        #endif
+    }
     /** Returns an analytic std::function of the dispersion. */
     ArgFunType get_dispersion(){ return tools::extract_tuple_f(std::function<real_type(arg_tuple)>([this](arg_tuple in){return dispersion(in);})); }
     /** Finds the equivalent point, which is used is calculations. */

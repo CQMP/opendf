@@ -7,6 +7,9 @@
 
 // mpi
 #cmakedefine OPENDF_ENABLE_MPI
+// compiler workarounds
+#cmakedefine BOLD_HYB_INTEL_BUGFIX
+#cmakedefine BOLD_HYB_GNU_BUGFIX
 
 namespace open_df { 
     typedef Eigen::MatrixXcd matrix_type; 
