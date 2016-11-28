@@ -30,6 +30,8 @@ struct lattice_traits_base {
              auto f = [this](Args... in){return dispersion(in...);};
              return tuple_tools::unfold_tuple(f,in);
         };
+
+    real_type dispersion(bz_point x) { arg_tuple y = tuple_tools::array_to_tuple(x); return this->dispersion(y); }
     /** Returns an analytic std::function of the dispersion. */
     ArgFunType get_dispersion(){ return tools::extract_tuple_f(std::function<real_type(arg_tuple)>([this](arg_tuple in){return dispersion(in);})); }
     /** Finds the equivalent point, which is used is calculations. */
@@ -51,6 +53,7 @@ struct cubic_traits : lattice_traits_base<D,cubic_traits<D>>{
     cubic_traits(real_type t):_t(t){};
     static BZPoint<D> findSymmetricBZPoint(const BZPoint<D>& in, const kmesh& kGrid);
     real_type dispersion(typename base::arg_tuple x) { return base::dispersion(x); }
+    real_type dispersion(typename base::bz_point x) { return base::dispersion(x); }
     template <typename Arg1, typename ...Args> 
         typename std::enable_if<sizeof...(Args) == D-1 && std::is_convertible<Arg1,real_type>::value, real_type>::type 
         dispersion(Arg1 in1, Args... in) {
@@ -66,6 +69,7 @@ struct cubic_traits<0>{
     cubic_traits(real_type t):_t(t){};
     real_type dispersion(){return 0.0;};
     real_type dispersion(std::tuple<>){return 0.0;};
+    real_type dispersion(BZPoint<0>) { return 0.0; }
 };
 
 /// Triangular lattice
@@ -77,6 +81,7 @@ struct triangular_traits : lattice_traits_base<2,triangular_traits> {
 
     real_type dispersion(real_type kx,real_type ky){return -2.*_t*(cos(kx)+cos(ky)) - 2.*_tp*cos(kx-ky);};
     real_type dispersion(typename base::arg_tuple x) { return base::dispersion(x); }
+    real_type dispersion(typename base::bz_point x) { return base::dispersion(x); }
     real_type disp_square_sum(){return 4.*_t*_t + 2.*_tp*_tp;}; 
     static BZPoint<2> findSymmetricBZPoint(const BZPoint<2>& in, const kmesh& kGrid);
     };
@@ -91,6 +96,7 @@ struct square_nnn_traits : lattice_traits_base<2,square_nnn_traits> {
 
     real_type dispersion(real_type kx,real_type ky){return -2.*_t*(cos(kx)+cos(ky)) - 4.*_tp*cos(kx)*cos(ky);};
     real_type dispersion(typename base::arg_tuple x) { return base::dispersion(x); }
+    real_type dispersion(typename base::bz_point x) { return base::dispersion(x); }
     real_type disp_square_sum(){return 4.*_t*_t + 4.*_tp*_tp;}; 
     static BZPoint<2> findSymmetricBZPoint(const BZPoint<2>& in, const kmesh& kGrid);
     };
