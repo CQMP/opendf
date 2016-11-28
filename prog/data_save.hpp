@@ -10,6 +10,7 @@ alps::params& save_define_parameters(alps::params& p)
      p.define<int>("plaintext",    0,      "save additionally to plaintext files (2 = verbose, 1 = save essential, 0 = no plaintext)");
      p.define<bool>("save_susc",    1,      "save susceptibilities");
      p.define<bool>("fluct_diag",    0,      "perform fluctuation diagnostics");
+     p.define<bool>("add_lattice_bubble", 0, "add lattice bubble to the susceptibility. WARNING : lattice bubble is evaluated naively and produces log error, consider adding it yourself");
     return p;
 }
 
@@ -97,10 +98,10 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
 
     if (save_susc) { 
         for (typename bmatsubara_grid::point W : bgrid.points()) {  
-            auto spin_susc = sc.spin_susc(W);
+            auto spin_susc = sc.spin_susc(W, p["add_lattice_bubble"] );
             if (is_float_equal(spin_susc.diff(spin_susc*0), 0, 1e-12)) continue;
             save_grid_object(ar, top + "/spin_susc_W" + std::to_string(W.value().imag())+"_k", spin_susc, plaintext > 0); 
-            auto charge_susc = sc.charge_susc(W);
+            auto charge_susc = sc.charge_susc(W, p["add_lattice_bubble"]);
             save_grid_object(ar, top + "/charge_susc_W" + std::to_string(W.value().imag())+"_k", charge_susc, plaintext > 0); 
 
             susc_r_type susc_r(gftools::tuple_tools::repeater<enum_grid, SCType::NDim>::get_tuple(rgrid));

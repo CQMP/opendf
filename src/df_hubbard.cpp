@@ -225,7 +225,7 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
 }
 
 template <typename LatticeT>
-typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::get_susc_(vertex_type const& vertex, bmatsubara_grid::point W, double norm) const
+typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::get_susc_(vertex_type const& vertex, bmatsubara_grid::point W, double norm, bool add_lattice_bubble) const
 {
     disp_type susc_q_data(disp_.grids()); 
 
@@ -274,7 +274,7 @@ typename df_hubbard<LatticeT>::disp_type df_hubbard<LatticeT>::get_susc_(vertex_
             susc = (gdl_bubble_vector.transpose()*full_m*gdl_bubble_vector)(0,0)*norm;
             //DEBUG(gftools::tuple_tools::print_array(q));
             //DEBUG(susc);
-            susc+=lattice_bubble.sum()*norm;
+            susc+=lattice_bubble.sum()*norm*double(add_lattice_bubble);
             //DEBUG(lattice_bubble.sum());
             }
         else susc = -1.;

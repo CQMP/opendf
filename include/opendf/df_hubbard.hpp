@@ -37,9 +37,9 @@ public:
     /// Run the df calculation and return the updated hybridization function
     virtual gw_type operator()(alps::params p);
     /// Get spin susceptibility at fixed frequency
-    disp_type spin_susc(bmatsubara_grid::point W) const { return std::forward<disp_type>(get_susc_(magnetic_vertex_, W, 0.5)); }
+    disp_type spin_susc(bmatsubara_grid::point W, bool add_lattice_bubble = false) const { return std::forward<disp_type>(get_susc_(magnetic_vertex_, W, 0.5, add_lattice_bubble)); }
     /// Get charge susceptibility at fixed frequency
-    disp_type charge_susc(bmatsubara_grid::point W) const { return std::forward<disp_type>(get_susc_(density_vertex_, W, 1.0)); }
+    disp_type charge_susc(bmatsubara_grid::point W, bool add_lattice_bubble = false) const { return std::forward<disp_type>(get_susc_(density_vertex_, W, 1.0, add_lattice_bubble)); }
     /// The grid of bosonic frequencies of the vertex (note - the number of bosonic freqs for the calculation is controlled by a separate parameter)
     bmatsubara_grid const& bgrid() const { return std::get<0>(magnetic_vertex_.grids()); }
     /// Calculate and save the equal fermionic-frequency component of the full dual vertex
@@ -50,7 +50,7 @@ public:
     std::tuple<std::vector<full_diag_vertex_type>, std::vector<full_diag_vertex_type>> fluctuation_diagnostics(std::vector<bz_point> kpoints, bool self_check = false) const;
 
 protected:
-    disp_type get_susc_(vertex_type const& in, bmatsubara_grid::point W, double norm) const;
+    disp_type get_susc_(vertex_type const& in, bmatsubara_grid::point W, double norm, bool add_lattice_bubble) const;
     using base::fgrid_;
     using base::kgrid_;
     using base::gd_;
