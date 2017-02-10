@@ -44,6 +44,6 @@ GPLv2.
 ### Academic usage. 
 Please cite *AE Antipov, JPF LeBlanc, E Gull, Physics Procedia* **68** *(C), 43-51 (2015)*. DOI : [10.1016/j.phpro.2015.07.107](http://dx.doi.org/10.1016/j.phpro.2015.07.107). 
 
-##### Copyright
+### Copyright
 Andrey E. Antipov, (Andrey.E.Antipov[at]gmail[dot]com), 2015-present.
   
