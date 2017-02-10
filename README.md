@@ -38,10 +38,10 @@ hub_df_cubicNd --help
    
 **NB**: Since c++11 support is required for the code to work, c++ dependencies (in particular, *alpscore* and *boost*) are required to be compiled in c++11 mode. 
 
-##### License 
+### License 
 GPLv2. 
 
-##### Academic usage. 
+### Academic usage. 
 Please cite *AE Antipov, JPF LeBlanc, E Gull, Physics Procedia* **68** *(C), 43-51 (2015)*. DOI : [10.1016/j.phpro.2015.07.107](http://dx.doi.org/10.1016/j.phpro.2015.07.107). 
 
 ##### Copyright
