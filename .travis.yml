@@ -1,0 +1,71 @@
+# Specify c language to get right CXX compiler (Travis bug https://github.com/travis-ci/travis-ci/issues/3871)
+language: c
+
+# Ubuntu 14.04 Trusty support
+sudo: required
+dist: trusty
+
+#compiler:
+#  - clang
+#  - gcc
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libeigen3-dev
+  - sudo apt-get install -y libopenmpi-dev
+  - sudo apt-get install -y libboost-all-dev
+  - sudo apt-get install -y libhdf5-dev
+  - sudo apt-get install -y libfftw3-dev
+
+script:
+  - git clone https://github.com/aeantipov/gftools.git
+  - git clone https://github.com/ALPSCore/ALPSCore.git
+  - cd ALPSCore
+  - mkdir build 
+  - cd build 
+  - cmake -DCMAKE_BUILD_TYPE=Release -DTesting=OFF -DENABLE_MPI=ON -DCMAKE_INSTALL_PREFIX="../../alpscore-inst" .. 
+  - make install 
+  - cd ../../
+  - mkdir build
+  - cd build
+  - cmake -DTesting=ON -DExamples=ON -DALPSCore_DIR="/home/travis/build/aeantipov/opendf/alpscore-inst/share/ALPSCore" -DGFTOOLS_INCLUDE_DIR="../gftools" ..
+  - make VERBOSE=1
+  - make test
+
+matrix:
+  include:
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+      env: CXX=g++-4.9 OMPI_CXX=g++-4.9 OMPI_CC=gcc-4.9 
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env: CXX=g++-5 OMPI_CXX=g++-5 OMPI_CC=gcc-5
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.6
+          packages:
+            - clang-3.6
+      env: CXX=clang++-3.6 OMPI_CXX=clang++-3.6 OMPI_CC=clang-3.6 
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.7
+          packages:
+            - clang-3.7
+      env: CXX=clang++-3.7 OMPI_CXX=clang++-3.7 OMPI_CC=clang-3.7
+
