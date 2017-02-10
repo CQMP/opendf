@@ -90,7 +90,7 @@ if (Execs)
 endif (Execs)
 
 # build tests
-option(Testing "Enable testing" ON)
+option(Testing "Enable testing" OFF)
 if (Testing)
     enable_testing()
     add_subdirectory(test)
