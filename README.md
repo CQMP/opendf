@@ -18,7 +18,7 @@ The installation is standard cmake-based. To compile (on POSIX os):
 - `make test` (optional) 
 - `make install`
 
-##### Usage
+### Usage
 ```
 hub_df_cubicNd --help
 ```
