@@ -116,15 +116,23 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
     if (p["fluct_diag"].as<bool>()) { 
         typedef typename SCType::bz_point bz_point;
         typedef std::array<double, D> bz_point_val;
+        // define mu and tp
+        double mu=p["mu"];
+        double tp=p["tp"];
         // do pi,0 and pi/2 pi/2
         kmesh::point k_pi = kgrid.find_nearest(M_PI);
         kmesh::point k_pi_half = kgrid.find_nearest(M_PI/2);
         kmesh::point k_zero = kgrid.find_nearest(0);
+        // do kx = pi cut zeroes
+        kmesh::point kx_pi_cut = kgrid.find_nearest(std::acos((mu-2)/(4*tp-2)));
+        // do kx = ky cut zeroes. Values for both zero and nonzero tp
+        kmesh::point kx_ky_cut_zero = kgrid.find_nearest(std::acos((mu)/(4)));
+        kmesh::point kx_ky_cut_nonzero = kgrid.find_nearest(std::acos(-(1-std::sqrt(1-tp*mu))/(2*tp)));
 
         std::vector<bz_point> fluct_pts;
 
         // add here points for fluctuation diagnostics
-        fluct_pts.reserve(2);
+        fluct_pts.reserve(4);
         // add pi/2 pi/2
         bz_point p1 = gftools::tuple_tools::repeater<kmesh::point, D>::get_array(k_pi_half);
         fluct_pts.push_back(p1); 
@@ -132,6 +140,13 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
         p1.fill(k_zero);
         p1[0] = k_pi;
         fluct_pts.push_back(p1); 
+        // add kx = pi cut zeroes
+        p1.fill(kx_pi_cut);
+        p1[0] = k_pi;
+        fluct_pts.push_back(p1);
+        //add kx = ky cut zeroes
+        (tp==0) ? p1.fill(kx_ky_cut_zero) : p1.fill(kx_ky_cut_nonzero);
+        fluct_pts.push_back(p1);
 
         //std::cout << "Fluctuation diagnostics points: " << std::endl;
         //for (bz_point k : fluct_pts) std::cout << "--> " <<  gftools::tuple_tools::print_array(k) << std::endl;
