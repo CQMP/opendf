@@ -14,6 +14,9 @@ alps::params& df_hubbard<LatticeT>::define_parameters(alps::params& p)
      .define<int>("df_sc_iter",     1000,   "maximum df iterations")
      .define<int>("nbosonic",       1,     "amount of bosonic freqs to use (reduced also by the amount of freqs in the vertex")
      .define<int>("n_bs_iter",      100,      "amount of self-consistent iterations in BS (with eval_bs_sc = 1)")
+     #ifndef NDEBUG 
+     .define<int>("verbosity",      0,      "debugging verbosity (only in Debug builds)")
+     #endif
         
      .define<bool>("update_df_mixing", 1, "update mixing of dual gf for better accuracy")
      .define<bool>("eval_bs_sc", 0, "evaluate Bethe-Salpeter equation self-consistently");
@@ -40,6 +43,8 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     bool store_full_diag_vertex = p["store_full_diag_vertex"];
     #ifndef NDEBUG 
     int verbosity = p["verbosity"]; // degugging verbosity - relevant only in debug build mode
+    #else
+    int verbosity = 0;
     #endif
 
     int kpts = kgrid_.size();
