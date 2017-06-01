@@ -23,6 +23,9 @@ endif (AutoSetCXX11)
 # Print build type
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+# Find ALPSCore package for alpscore dependency
+find_package(ALPSCore REQUIRED COMPONENTS hdf5 accumulators mc params HINTS ${ALPS_ROOT})
+
 # Dependencies
 add_alpscore()
 add_eigen3()
