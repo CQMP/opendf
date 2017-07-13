@@ -3,6 +3,7 @@ set (execs
 hub_df
 )
 
+find_package (Boost COMPONENTS filesystem)
 
 foreach (df_lattice ${df_lattices})
     message(STATUS "DF: ${df_lattice}")
@@ -10,7 +11,9 @@ foreach (df_lattice ${df_lattices})
         set(exec ${exec_name}_${df_lattice})
         add_executable(${exec} ${exec_name}.cpp)
         set_target_properties(${exec} PROPERTIES COMPILE_DEFINITIONS "LATTICE_${df_lattice}" POSITION_INDEPENDENT_CODE ON) 
-        target_link_libraries(${exec} ${opendf_name})
+        target_link_libraries(${exec} PUBLIC ${opendf_name})
+        target_include_directories(${exec} PUBLIC ${Boost_INCLUDE_DIRS})
+        target_link_libraries(${exec} PUBLIC ${Boost_LIBRARIES})
         if (NOT GFTOOLS_FOUND)
             add_dependencies(${exec} gftools)
         endif()

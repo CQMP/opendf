@@ -12,6 +12,7 @@
 
 #include <opendf/lattice_traits.hpp>
 #include <opendf/df_hubbard.hpp>
+#include <boost/filesystem.hpp>
 
 #include "data_save.hpp"
 
