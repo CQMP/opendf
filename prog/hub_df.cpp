@@ -39,7 +39,7 @@
 #elif LATTICE_square_nnn
     static constexpr int D = 2; 
     typedef open_df::square_nnn_traits lattice_t; 
-    #define LATTICE_PARAMS 2
+    #define LATTICE_PARAMS 3
 #else 
 #error Undefined lattice
 #endif
@@ -120,6 +120,8 @@ void run(alps::params p)
     lattice_t lattice(p["t"].as<double>());
     #elif LATTICE_PARAMS==2
     lattice_t lattice(p["t"], p["tp"]);
+    #elif LATTICE_PARAMS==3
+    lattice_t lattice(p["t"], p["tp"], p["tdp"]);
     #endif
     // get dispersion
     disp_type disp(gftools::tuple_tools::repeater<kmesh, D>::get_tuple(kgrid));
@@ -235,6 +237,10 @@ alps::params cmdline_params(int argc, char* argv[])
     #elif LATTICE_PARAMS == 2
     p.define<double>("t",  1.0,   "nearest neighbor hopping on a lattice");
     p.define<double>("tp", 0.0,   "next-nearest neighbor hopping on a lattice");
+    #elif LATTICE_PARAMS == 3
+    p.define<double>("t",  1.0,   "nearest neighbor hopping on a lattice");
+    p.define<double>("tp", 0.0,   "next-nearest neighbor hopping on a lattice");
+    p.define<double>("tdp", 0.0,   "third-nearest neighbor hopping on a lattice");
     #else
     #error Undefined lattice
     #endif

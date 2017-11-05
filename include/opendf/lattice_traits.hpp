@@ -99,9 +99,10 @@ struct square_nnn_traits : lattice_traits_base<2,square_nnn_traits> {
     typedef lattice_traits_base<2,square_nnn_traits> base;
     real_type _t = 1.0;
     real_type _tp = 1.0;
-    square_nnn_traits(real_type t, real_type tp):_t(t),_tp(tp){};
+    real_type _tdp=1.0;
+    square_nnn_traits(real_type t, real_type tp, real_type tdp):_t(t),_tp(tp), _tdp(tdp){};
 
-    real_type dispersion(real_type kx,real_type ky){return -2.*_t*(cos(kx)+cos(ky)) - 4.*_tp*cos(kx)*cos(ky);};
+    real_type dispersion(real_type kx,real_type ky){return -2.*_t*(cos(kx)+cos(ky)) - 4.*_tp*cos(kx)*cos(ky) -2.*_tdp*(cos(2.*kx)+cos(2*kx));};
     real_type dispersion(typename base::arg_tuple x) { return base::dispersion(x); }
     real_type dispersion(typename base::bz_point x) { return base::dispersion(x); }
     real_type disp_square_sum(){return 4.*_t*_t + 4.*_tp*_tp;}; 
