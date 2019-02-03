@@ -46,6 +46,9 @@ endif()
 # fftw3
 add_fftw3()
 
+# https://stackoverflow.com/questions/25365160/boostmultiprecisionfloat128-and-c11
+add_definitions("-fext-numeric-literals")
+
 ### add source/binary root of the project to included path
 include_directories(
     ${CMAKE_SOURCE_DIR}
