@@ -86,7 +86,7 @@ struct triangular_traits : lattice_traits_base<2,triangular_traits> {
     real_type _tp = 1.0;
     triangular_traits(real_type t, real_type tp):_t(t),_tp(tp){};
 
-    real_type dispersion(real_type kx,real_type ky){return -2.*_t*(cos(kx)+cos(ky)) - 2.*_tp*cos(kx-ky);};
+    real_type dispersion(real_type kx,real_type ky){return -2.*_t*cos(kx) - 2.0*_t*cos(ky) - 2.*_tp*cos(kx-ky);};
     real_type dispersion(typename base::arg_tuple x) { return base::dispersion(x); }
     real_type dispersion(typename base::bz_point x) { return base::dispersion(x); }
     real_type disp_square_sum(){return 4.*_t*_t + 2.*_tp*_tp;}; 

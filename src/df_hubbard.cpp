@@ -1,6 +1,14 @@
+#ifdef OPENDF_ENABLE_MPI
+#include <alps/utilities/boost_mpi.hpp>
+#define mpi_df_cout if(mpi_rank==0) std::cout
+#else
+#define mpi_df_cout std::cout
+#endif
+
 #include "opendf/df_hubbard.hpp"
 #include "opendf/diagrams.hpp"
 #include "opendf/lattice_traits.hpp"
+
 
 namespace open_df { 
 
@@ -30,7 +38,16 @@ alps::params& df_hubbard<LatticeT>::define_parameters(alps::params& p)
 template <typename LatticeT>
 typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::params p)
 {
-    std::cout << "Starting ladder dual fermion calculations" << std::endl;
+    int mpi_rank, mpi_size;
+    mpi_rank=0; mpi_size=1;
+    #ifdef OPENDF_ENABLE_MPI
+     alps::mpi::communicator comm_df;
+     mpi_rank=comm_df.rank();
+     mpi_size=comm_df.size();     
+     if(mpi_rank==0) std::cout<<"myrank = "<< mpi_rank<<std::endl;
+    #endif 
+ 
+    if(mpi_rank==0) std::cout << "Starting ladder dual fermion calculations" << std::endl;
 
     int n_bs_iter = p["n_bs_iter"];   // number of Bethe Salpeter iterations, if iterative evaluation is requested (also used, when the ladder can't be converged)
     double bs_mix = p["bs_mix"];      // mixing between subsequent Bethe-Salpeter iterations 
@@ -53,14 +70,15 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     double beta = fgrid_.beta();
     double T = 1.0/beta;
     bmatsubara_grid const& bgrid = magnetic_vertex_.grid();
-    std::cout << "Vertices are defined on bosonic grid : " << bgrid << std::endl; 
+    if(mpi_rank==0) std::cout << "Vertices are defined on bosonic grid : " << bgrid << std::endl; 
     const auto unique_kpts = lattice_t::getUniqueBZPoints(kgrid_);
+    const auto all_kpts = lattice_t::getAllBZPoints(kgrid_);
 
     gk_type gd_initial(gd_);
 
     gw_type gd_sum(fgrid_);
     for (auto iw : fgrid_.points()) { gd_sum[iw] = std::abs(gd_[iw].sum())/totalkpts; }; 
-    std::cout << "Beginning with GD sum = " << std::abs(gd_sum.sum())/double(fgrid_.size()) << std::endl;
+    if(mpi_rank==0) std::cout << "Beginning with GD sum = " << std::abs(gd_sum.sum())/double(fgrid_.size()) << std::endl;
     
     // prepare caches        
     fvertex_type m_v(fgrid_, fgrid_), d_v(m_v);
@@ -83,17 +101,28 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     double diff_gd = 1.0, diff_gd_min = diff_gd;
     int diff_gd_min_count = 0;
 
+    int av_Windex= (2*nbosonic_-1)/mpi_size+1;
+    int start_Windex = mpi_rank*av_Windex - nbosonic_ +1;
+    int end_Windex = (mpi_rank+1)*av_Windex - nbosonic_;
+    if(end_Windex>=nbosonic_) end_Windex=nbosonic_-1;
+    //std::cout<<nbosonic_<<"  "<<mpi_size<<"   "<<av_Windex<<std::endl;
+   
+    std::complex<double> reduced_sigma_d[sigma_d_.size()];
+    std::complex<double> vector_sigma_d[sigma_d_.size()];
+    
+
     for (size_t nd_iter=0; nd_iter<df_sc_iter && diff_gd > df_sc_cutoff; ++nd_iter) { 
         sigma_d_ = 0.0;
-        std::cout << std::endl << "DF iteration " << nd_iter << std::endl;
-
+        if(mpi_rank==0) std::cout << std::endl << "DF iteration " << nd_iter << std::endl;
+       
         // loop through conserved bosonic frequencies
-        for (int Windex = -nbosonic_ + 1; Windex < nbosonic_; Windex++) { 
+        
+        for (int Windex = start_Windex; Windex <= end_Windex; Windex++) { 
             std::complex<double> W_val = BMatsubara(Windex, beta);
             typename bmatsubara_grid::point W = bgrid.find_nearest(W_val); 
             assert(is_float_equal(W.value(), W_val, 1e-4));
-            std::cout << "W (bosonic) = " << W << std::endl;
-            std::cout << "Calculating bubbles" << std::endl;
+            if(mpi_rank==0) std::cout << "W (bosonic) = " << W << std::endl;
+            if(mpi_rank==0) std::cout << "Calculating bubbles" << std::endl;
             gk_type dual_bubbles = diagram_traits::calc_bubbles(gd_, W); 
 
                 
@@ -115,12 +144,12 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 std::array<kmesh::point, NDim> q = pts_it->first; // point
                 real_type q_weight = real_type(pts_it->second.size()); // it's weight
                 auto other_qpts = pts_it -> second; // other points, equivalent by symmetry
-                std::cout << nq++ << "/" << unique_kpts.size() << ": [" << std::flush;
+                if(mpi_rank==0) std::cout << nq++ << "/" << unique_kpts.size() << ": [" << std::flush;
                 //for (size_t i=0; i<D; ++i) std::cout << real_type(q[i]) << " " << std::flush; std::cout << "]. Weight : " << q_weight << ". " << std::endl;
 
                 // define arguments conserved on the ladder
                 typename gk_type::arg_tuple Wq_args = std::tuple_cat(std::make_tuple(W),q);
-                std::cout << tuple_tools::print_tuple(Wq_args) << "]. Weight : " << q_weight << ". " << std::flush;
+                if(mpi_rank==0) std::cout << tuple_tools::print_tuple(Wq_args) << "]. Weight : " << q_weight << ". " << std::flush;
                 // get dual bubble
                 dual_bubble.fill([&](typename fmatsubara_grid::point w){return dual_bubbles(std::tuple_cat(std::make_tuple(w), q)); });
 
@@ -129,18 +158,18 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 // Calculate ladders in different channels and get a determinant of 1 - vertex * bubble. 
                 // If it's negative - one eigenvalue is negative, i.e. the ladder can't be evaluated.
                 // magnetic channel
-                std::cout << "\tMagnetic " << std::flush;
+                if(mpi_rank==0) std::cout << "\tMagnetic " << std::flush;
                 forward_bs magnetic_bs(dual_bubble_matrix, magnetic_v_matrix, 0);
                 full_m = magnetic_bs.solve(eval_bs_sc, n_bs_iter, bs_mix);
                 double m_det = magnetic_bs.determinant().real();
-                std::cout << "det = " << m_det;
+                if(mpi_rank==0) std::cout << "det = " << m_det;
                 min_det = std::min(min_det, m_det); 
                 // density channel
-                std::cout << "\tDensity " << std::flush;
+                if(mpi_rank==0) std::cout << "\tDensity " << std::flush;
                 forward_bs density_bs(dual_bubble_matrix, density_v_matrix, 0);
                 full_d = density_bs.solve(eval_bs_sc, n_bs_iter, bs_mix);
                 double d_det = density_bs.determinant().real();
-                std::cout << "det = " << d_det;
+                if(mpi_rank==0) std::cout<< "det = " << d_det;
                 min_det = std::min(min_det, d_det); 
 
                 // second order correction
@@ -157,13 +186,13 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                         full_vertex.get(std::tuple_cat(std::make_tuple(iw1),q_pt)) = 0.5*(3.0*(magnetic_val)+density_val);
                         };
                     };
-                std::cout << std::endl;
+                if(mpi_rank==0) std::cout << std::endl;
                 } // end bz loop
 
             if (store_full_diag_vertex) { 
                 (*full_diag_vertex_ptr_)[W] = full_vertex.data();
                 }
-            std::cout << "Updating sigma" << std::endl;
+            if(mpi_rank==0) std::cout << "Updating sigma" << std::endl;
             for (auto iw1 : fgrid_.points()) {
                 v4r = run_fft(full_vertex[iw1], FFTW_FORWARD)/knorm;
                 gdr = run_fft(gd_shift[iw1], FFTW_BACKWARD);
@@ -171,20 +200,48 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
                 sigma_d_[iw1]+= (1.0*T)*run_fft(v4r*gdr, FFTW_FORWARD); 
                 };
             //std::cout << "After W = " << W << " sigma diff = " << sigma_d_.diff(sigma_d_ * 0) << std::endl;
-
             } // end bgrid loop
 
-        std::cout << "Total sigma diff = " << sigma_d_.diff(sigma_d_*0) << std::endl;
+            #ifdef OPENDF_ENABLE_MPI
+            MPI_Barrier(MPI_COMM_WORLD);
+            int jj=0;
+            for(auto iw1 : fgrid_.points()){
+              for (auto pts_it = all_kpts.begin(); pts_it != all_kpts.end(); pts_it++) { 
+                std::array<kmesh::point, NDim> q = *pts_it;    
+                auto wk = std::tuple_cat(std::make_tuple(iw1),q); 
+                vector_sigma_d[jj]=sigma_d_(wk);
+                reduced_sigma_d[jj]=0.0;
+                jj++;
+             }
+            }
+
+            int size_sigma=sigma_d_.size();
+            MPI_Barrier(MPI_COMM_WORLD);                     
+            MPI_Allreduce(&vector_sigma_d[0],&reduced_sigma_d[0],size_sigma,MPI_DOUBLE_COMPLEX,MPI_SUM,MPI_COMM_WORLD);
+            MPI_Barrier(MPI_COMM_WORLD);    
+
+            jj=0;
+            for(auto iw1 : fgrid_.points()){
+              for (auto pts_it = all_kpts.begin(); pts_it != all_kpts.end(); pts_it++) { 
+                std::array<kmesh::point, NDim> q = *pts_it;    
+                auto wk = std::tuple_cat(std::make_tuple(iw1),q); 
+                sigma_d_(wk)=reduced_sigma_d[jj];
+                jj++;
+             }
+            }
+           #endif
+ 
+        if(mpi_rank==0) std::cout << "Total sigma diff = " << sigma_d_.diff(sigma_d_*0) << std::endl;
 
         // check convergence
         auto gd_new = df_sc_mix/(1.0/gd0_ - sigma_d_) + gd_*(1.0-df_sc_mix); // Dyson eq;
         diff_gd = gd_new.diff(gd_);
         if (diff_gd<diff_gd_min-df_sc_cutoff/10.) { diff_gd_min = diff_gd; diff_gd_min_count = 0; }
         else diff_gd_min_count++;
-        std::cout << "Dual gd diff = " << diff_gd << std::endl;
+        if(mpi_rank==0) std::cout << "Dual gd diff = " << diff_gd << std::endl;
 
         if (diff_gd_min_count > 12 && std::abs(df_sc_mix-0.05)>1e-3 && update_df_sc_mixing) {
-            std::cerr << "\n\tCaught loop cycle. Reducing DF mixing to " << df_sc_mix/2 << " .\n" << std::endl;
+            if(mpi_rank==0) std::cerr << "\n\tCaught loop cycle. Reducing DF mixing to " << df_sc_mix/2 << " .\n" << std::endl;
             df_sc_mix=std::max(df_sc_mix/1.5, 0.05);
             gd_new = gd_initial;
             sigma_d_ = 0.0;
@@ -192,18 +249,21 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
             diff_gd_min_count = 0;
             }
 
-        diffDF_stream.open(p["diff_stream"].as<std::string>(),std::ios::app);
-        diffDF_stream << diff_gd << "  " << df_sc_mix << " " << min_det << std::endl;
-        diffDF_stream.close();
+        if(mpi_rank==0) diffDF_stream.open(p["diff_stream"].as<std::string>(),std::ios::app);
+        if(mpi_rank==0) diffDF_stream << diff_gd << "  " << df_sc_mix << " " << min_det << std::endl;
+        if(mpi_rank==0) diffDF_stream.close();
 
         gd_=gd_new;
         gd_.set_tail(gd0_.tail()); // assume DMFT asymptotics are good 
         sigma_d_ = 0.0;
 
         for (auto iw : fgrid_.points()) { gd_sum[iw] = std::abs(gd_[iw].sum())/knorm; }; 
-        std::cout << "GD sum = " << std::abs(gd_sum.sum())/double(fgrid_.size()) << std::endl; 
+        if(mpi_rank==0) std::cout << "GD sum = " << std::abs(gd_sum.sum())/double(fgrid_.size()) << std::endl; 
+        #ifdef OPENDF_ENABLE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+        #endif
         }
-    std::cout << "Finished DF iterations" << std::endl;
+    if(mpi_rank==0) std::cout << "Finished DF iterations" << std::endl;
         
     sigma_d_ = 1.0/gd0_ - 1.0/gd_; 
 
@@ -225,6 +285,50 @@ typename df_hubbard<LatticeT>::gw_type df_hubbard<LatticeT>::operator()(alps::pa
     //DEBUG("GD0 = " << GD0);
     //DEBUG("GD  = " << GD);
     //DEBUG("SigmaD = " << SigmaD);
+    if (store_full_diag_vertex) { 
+      #ifdef OPENDF_ENABLE_MPI
+       MPI_Barrier(MPI_COMM_WORLD);
+       int size_full_vertex=bgrid.size()*sigma_d_.size();
+       //std::array<std::complex<double>,size_full_vertex> vector_full_vertex;
+       //std::array<std::complex<double>,size_full_vertex> reduced_full_vertex;
+       std::complex<double> vector_full_vertex[size_full_vertex];
+       std::complex<double> reduced_full_vertex[size_full_vertex];
+       std::complex<double> czero(0.0,0.0);
+       std::fill(&reduced_full_vertex[0],&reduced_full_vertex[size_full_vertex-1],czero);
+       int jj=0;
+       for(auto iw1 : bgrid.points()){
+        for(auto iw2 : fgrid_.points()){
+         for (auto pts_it = all_kpts.begin(); pts_it != all_kpts.end(); pts_it++) { 
+            std::array<kmesh::point, NDim> q = *pts_it;    
+            auto wk = std::tuple_cat(std::make_tuple(iw1),std::make_tuple(iw2),q);
+            vector_full_vertex[jj]=(*full_diag_vertex_ptr_)(wk);
+            jj++;
+         }
+        }
+       }
+
+       MPI_Barrier(MPI_COMM_WORLD);                     
+       MPI_Allreduce(&vector_full_vertex[0],&reduced_full_vertex[0],size_full_vertex,MPI_DOUBLE_COMPLEX,MPI_SUM,MPI_COMM_WORLD);
+       MPI_Barrier(MPI_COMM_WORLD); 
+
+       jj=0;
+       for(auto iw1 : bgrid.points()){
+        for(auto iw2 : fgrid_.points()){
+         for (auto pts_it = all_kpts.begin(); pts_it != all_kpts.end(); pts_it++) { 
+            std::array<kmesh::point, NDim> q = *pts_it;    
+            auto wk = std::tuple_cat(std::make_tuple(iw1),std::make_tuple(iw2),q);
+            (*full_diag_vertex_ptr_)(wk)=reduced_full_vertex[jj];
+            jj++;
+         }
+        }
+       }        
+
+     MPI_Barrier(MPI_COMM_WORLD);
+    #endif
+    }
+
+
+
     return delta_out;
 
 }
