@@ -215,9 +215,7 @@ int main(int argc, char *argv[])
     #ifdef OPENDF_ENABLE_MPI
     MPI_Init(&argc, &argv);
     #endif
-    std::cout<<"b1\n";
     try { 
-        std::cout<<"b0\n";
         alps::params p = cmdline_params(argc, argv); 
         run(p); 
         }
@@ -232,10 +230,7 @@ int main(int argc, char *argv[])
 
 alps::params cmdline_params(int argc, char** argv)
 {
-    std::cout<<"a0\n";
     alps::params p(argc, argv);
-    //alps::parameters_type<df_type>::type parms(argc, (const char**)argv);
-    std::cout<<"a1\n";
     p.description("Dual fermions for the Hubbard model in " + std::to_string(D) + " dimensions.");
     df_type::define_parameters(p);
 
