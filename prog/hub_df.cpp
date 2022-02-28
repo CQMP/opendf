@@ -234,7 +234,7 @@ alps::params cmdline_params(int argc, char* argv[])
     p.define<double>("t",  1.0,   "hopping on a lattice");
     #elif LATTICE_PARAMS == 2
     p.define<double>("t",  1.0,   "nearest neighbor hopping on a lattice");
-    p.define<double>("tp", 0.0,   "next-nearest neighbor hopping on a lattice");
+    p.define<double>("tp", 0.0,   "next-nearest neighbor hopping on a square lattice, anisotropic hopping along one direction on a triangular lattice (set 1.0 if you want an isotropic triangular lattice)");
     #else
     #error Undefined lattice
     #endif
