@@ -133,7 +133,7 @@ void save_data(SCType const& sc, typename SCType::gw_type new_delta, alps::param
 
         // add here points for fluctuation diagnostics
         fluct_pts.reserve(4);
-        // add pi/2 pi/2
+        // add pi/2 pi/2Raman demo session
         bz_point p1 = gftools::tuple_tools::repeater<kmesh::point, D>::get_array(k_pi_half);
         fluct_pts.push_back(p1); 
         // add pi, 0
