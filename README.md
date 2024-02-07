@@ -24,7 +24,7 @@ hub_df_cubicNd --help
 ```
 
 ### Dependencies:
-- c++11 - compatible c++ compiler
+- c++11 - compatible c++ compiler; To link to the current ALPSCore, set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_MATH_DISABLE_FLOAT128")
 - *cmake*
 - *eigen3* (header-only) : http://eigen.tuxfamily.org/. CMake option: `-DEIGEN3_INCLUDE_DIR=path_to_eigen3_headers`.
 - *fftw*. Cmake option : `-DFFTW_ROOT=path_to_fftw_prefix` (that is before include or lib).
