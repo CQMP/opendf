@@ -9,6 +9,8 @@
 
 #include <chrono>
 #include <alps/params.hpp>
+//#include "alps/hdf5.hpp"
+
 
 #include <opendf/lattice_traits.hpp>
 #include <opendf/df_hubbard.hpp>
@@ -53,19 +55,23 @@ typedef df_type::gw_type gw_type;
 typedef df_type::gk_type gk_type;
 typedef df_type::disp_type disp_type;
 
+#ifdef OPENDF_ENABLE_MPI
+  alps::mpi::communicator comm;
+#endif 
 
 inline void print_section (const std::string& str)
 {
-  std::cout << std::string(str.size(),'=') << std::endl;
-  std::cout << str << std::endl;
-  std::cout << std::string(str.size(),'=') << std::endl;
+  mpi_cout << std::string(str.size(),'=') << std::endl;
+  mpi_cout << str << std::endl;
+  mpi_cout << std::string(str.size(),'=') << std::endl;
 }
 
 void run(alps::params p)
 {
-    #ifdef OPENDF_ENABLE_MPI
-    alps::mpi::communicator comm;
-    #endif 
+    #ifdef OPENDF_ENABLE_MPI     
+      mpi_cout<<"number of process "<<comm.size()<<std::endl;
+      mpi_cout<<"rank id "<<comm.rank()<<std::endl;
+    #endif
 
     print_section("DF ladder in " + std::to_string(D) + " dimensions.");
     // read input data
@@ -156,10 +162,11 @@ void run(alps::params p)
     end = steady_clock::now();
 
     #ifdef OPENDF_ENABLE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
     if (!comm.rank()) 
     #endif
         { 
-
+        //std::cout<<"comm.rank "<<comm.rank()<<std::endl;
         mpi_cout << "Calculation lasted : " 
             << duration_cast<hours>(end-start).count() << "h " 
             << duration_cast<minutes>(end-start).count()%60 << "m " 
@@ -189,6 +196,10 @@ void run(alps::params p)
             d0.savetxt("density_vertex_input_W0.dat");
             }
         }
+
+    #ifdef OPENDF_ENABLE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+    #endif
 }
 
 
@@ -197,29 +208,34 @@ void run(alps::params p)
 // 
 
 #ifndef BUILD_PYTHON_MODULE
-alps::params cmdline_params(int argc, char* argv[]);
+alps::params cmdline_params(int argc, char** argv);
 
 int main(int argc, char *argv[])
 {
     #ifdef OPENDF_ENABLE_MPI
     MPI_Init(&argc, &argv);
     #endif
-
     try { 
         alps::params p = cmdline_params(argc, argv); 
         run(p); 
         }
     catch (std::exception &e) { std::cerr << e.what() << std::endl; exit(1); };
-    
+
+    #ifdef OPENDF_ENABLE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
+    #endif    
 }
 
 
-alps::params cmdline_params(int argc, char* argv[])
+alps::params cmdline_params(int argc, char** argv)
 {
-    alps::params p(argc, (const char**)argv);
+    alps::params p(argc, argv);
     p.description("Dual fermions for the Hubbard model in " + std::to_string(D) + " dimensions.");
-
     df_type::define_parameters(p);
+
+
+
     save_define_parameters(p);
 
     p

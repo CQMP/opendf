@@ -1,6 +1,7 @@
 #pragma once 
 #include "opendf/df_base.hpp"
 
+
 namespace open_df { 
 
 /// Dual fermion evaluation of a spin-symmetric Hubbard model without spatial symmetry breaking
